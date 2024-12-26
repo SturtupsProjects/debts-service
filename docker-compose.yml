@@ -1,0 +1,55 @@
+version: "3.9"
+
+services:
+  migrate:
+    image: "migrate/migrate"
+    networks:
+      - CRMNet
+    volumes:
+      - ./migrations:/migrations
+    command: ["-path", "/migrations", "-database", "postgres://postgres:123321@postgres-db:5432/crm_admin_debts?sslmode=disable", "up"]
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+
+  postgres-db:
+    image: postgres:16.3
+    container_name: crm-debts-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123321
+      - POSTGRES_DB=crm_admin_debts
+    networks:
+      - CRMNet
+    ports:
+      - 5439:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  debts:
+    container_name: debts-service
+    build: .
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - CRMNet
+    ports:
+      - "8075:8075"
+
+networks:
+  CRMNet:
+    name: CRMNet
+    driver: bridge
+    external: true
+
+volumes:
+  postgres_data:
+    name: debts_postgres_data
+  migrations:
+    driver: local

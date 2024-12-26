@@ -2,6 +2,7 @@ package repo
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -69,7 +70,7 @@ func (c *clientRepo) GetClient(in *pb.ClientID) (*pb.Client, error) {
 		&client.CreatedAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("client not found")
 		}
 		return nil, fmt.Errorf("failed to get client: %w", err)
