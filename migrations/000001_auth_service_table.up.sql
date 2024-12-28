@@ -32,7 +32,7 @@ CREATE TABLE payments
     installment_id UUID           NOT NULL REFERENCES installment (id) ON DELETE CASCADE,
     payment_date   TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     payment_amount DECIMAL(10, 2) NOT NULL CHECK (payment_amount > 0),
-    created_at     TIMESTAMP   DEFAULT CURRENT_TIMESTAMP,
+    created_at     TIMESTAMP   DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Индексы для оптимизации запросов
