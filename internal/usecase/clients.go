@@ -9,7 +9,7 @@ import (
 )
 
 type ClientServiceServer struct {
-	pb.UnimplementedClientServiceServer
+	pb.UnimplementedDebtsServiceServer
 	repo ClientsRepo
 	log  *slog.Logger
 }

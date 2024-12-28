@@ -1,0 +1,47 @@
+{"time":"2024-12-28T22:37:16.893433693+05:00","level":"INFO","msg":"CreateDebt called","client_id":"fe655838-396c-4433-b37e-ce5592f636bf"}
+{"time":"2024-12-28T22:37:16.966114365+05:00","level":"ERROR","msg":"Failed to create debt","error":"failed to create installment: pq: cannot insert a non-DEFAULT value into column \"is_fully_paid\""}
+{"time":"2024-12-28T22:39:16.378940878+05:00","level":"INFO","msg":"CreateDebt called","client_id":"fe655838-396c-4433-b37e-ce5592f636bf"}
+{"time":"2024-12-28T22:39:16.380272756+05:00","level":"ERROR","msg":"Failed to create debt","error":"failed to create installment: pq: cannot insert a non-DEFAULT value into column \"is_fully_paid\""}
+{"time":"2024-12-28T22:39:30.061614623+05:00","level":"INFO","msg":"CreateDebt called","client_id":"fe655838-396c-4433-b37e-ce5592f636bf"}
+{"time":"2024-12-28T22:39:30.062807995+05:00","level":"ERROR","msg":"Failed to create debt","error":"failed to create installment: pq: cannot insert a non-DEFAULT value into column \"is_fully_paid\""}
+{"time":"2024-12-28T22:41:38.615171672+05:00","level":"ERROR","msg":"Error listening on port :8075"}
+{"time":"2024-12-28T22:41:55.779200053+05:00","level":"INFO","msg":"CreateDebt called","client_id":"fe655838-396c-4433-b37e-ce5592f636bf"}
+{"time":"2024-12-28T22:42:06.295407+05:00","level":"INFO","msg":"GetClientDebts called","client_id":""}
+{"time":"2024-12-28T22:42:19.542673035+05:00","level":"INFO","msg":"GetClientDebts called","client_id":""}
+{"time":"2024-12-28T22:43:24.781799376+05:00","level":"INFO","msg":"GetListDebts called","filters":{"debt_id":"e52038c5-4c45-42f3-9b78-c9e803ae6b87","paid_amount":100,"company_id":"cdb8a9c6-00d2-444e-9ab5-e4cb66a8c6d4"}}
+{"time":"2024-12-28T22:43:24.854134923+05:00","level":"ERROR","msg":"Failed to retrieve debts list","error":"failed to update installment: pq: column \"is_fully_paid\" can only be updated to DEFAULT"}
+{"time":"2024-12-28T22:45:22.785331844+05:00","level":"INFO","msg":"GetListDebts called","filters":{"debt_id":"e52038c5-4c45-42f3-9b78-c9e803ae6b87","paid_amount":100,"company_id":"cdb8a9c6-00d2-444e-9ab5-e4cb66a8c6d4"}}
+{"time":"2024-12-28T22:45:46.424967441+05:00","level":"INFO","msg":"GetClientDebts called","client_id":""}
+{"time":"2024-12-28T22:46:16.763408766+05:00","level":"INFO","msg":"GetPaymentsByDebtId called","debt_id":"e52038c5-4c45-42f3-9b78-c9e803ae6b87"}
+{"time":"2024-12-28T22:46:16.765338525+05:00","level":"INFO","msg":"Payments retrieved by debt ID successfully","debt_id":"e52038c5-4c45-42f3-9b78-c9e803ae6b87","count":1}
+{"time":"2024-12-28T22:46:25.071614463+05:00","level":"INFO","msg":"GetListDebts called","filters":{"debt_id":"e52038c5-4c45-42f3-9b78-c9e803ae6b87","paid_amount":10,"company_id":"cdb8a9c6-00d2-444e-9ab5-e4cb66a8c6d4"}}
+{"time":"2024-12-28T22:46:31.643415011+05:00","level":"INFO","msg":"GetPaymentsByDebtId called","debt_id":"e52038c5-4c45-42f3-9b78-c9e803ae6b87"}
+{"time":"2024-12-28T22:46:31.644309896+05:00","level":"INFO","msg":"Payments retrieved by debt ID successfully","debt_id":"e52038c5-4c45-42f3-9b78-c9e803ae6b87","count":2}
+{"time":"2024-12-28T22:46:44.808664788+05:00","level":"INFO","msg":"GetDebt called","debt_id":"e52038c5-4c45-42f3-9b78-c9e803ae6b87"}
+{"time":"2024-12-28T22:51:36.626303525+05:00","level":"INFO","msg":"GetClientDebts called","client_id":""}
+{"time":"2024-12-28T22:51:53.824775712+05:00","level":"INFO","msg":"GetDebt called","debt_id":"e52038c5-4c45-42f3-9b78-c9e803ae6b87"}
+{"time":"2024-12-28T22:52:00.738718086+05:00","level":"INFO","msg":"GetPaymentsByDebtId called","debt_id":"e52038c5-4c45-42f3-9b78-c9e803ae6b87"}
+{"time":"2024-12-28T22:52:00.739327382+05:00","level":"INFO","msg":"Payments retrieved by debt ID successfully","debt_id":"e52038c5-4c45-42f3-9b78-c9e803ae6b87","count":2}
+{"time":"2024-12-28T22:52:39.346195925+05:00","level":"INFO","msg":"GetPaymentsByDebtId called","debt_id":"e52038c5-4c45-42f3-9b78-c9e803ae6b87"}
+{"time":"2024-12-28T22:52:39.3470392+05:00","level":"INFO","msg":"Payments retrieved by debt ID successfully","debt_id":"e52038c5-4c45-42f3-9b78-c9e803ae6b87","count":2}
+{"time":"2024-12-28T22:52:46.677193419+05:00","level":"INFO","msg":"GetPayments called","filters":{}}
+{"time":"2024-12-28T22:52:46.678231112+05:00","level":"ERROR","msg":"Failed to retrieve payments list","error":"failed to get payments: pq: operator does not exist: uuid = text"}
+{"time":"2024-12-28T22:52:53.990719434+05:00","level":"INFO","msg":"GetPayments called","filters":{}}
+{"time":"2024-12-28T22:52:53.991194407+05:00","level":"ERROR","msg":"Failed to retrieve payments list","error":"failed to get payments: pq: operator does not exist: uuid = text"}
+{"time":"2024-12-28T22:56:23.143466184+05:00","level":"INFO","msg":"GetClientDebts called","client_id":""}
+{"time":"2024-12-28T22:56:53.914804063+05:00","level":"INFO","msg":"GetPayments called","filters":{}}
+{"time":"2024-12-28T22:56:53.915308282+05:00","level":"ERROR","msg":"Failed to retrieve payments list","error":"failed to get payments: pq: operator does not exist: uuid = text"}
+{"time":"2024-12-28T23:01:19.486366213+05:00","level":"INFO","msg":"GetPayments called","filters":{"company_id":"cdb8a9c6-00d2-444e-9ab5-e4cb66a8c6d4"}}
+{"time":"2024-12-28T23:01:19.488859577+05:00","level":"ERROR","msg":"Failed to retrieve payments list","error":"failed to get payments: pq: operator does not exist: uuid = text"}
+{"time":"2024-12-28T23:08:21.147376489+05:00","level":"INFO","msg":"GetPayments called","filters":{"company_id":"cdb8a9c6-00d2-444e-9ab5-e4cb66a8c6d4"}}
+{"time":"2024-12-28T23:08:21.15127389+05:00","level":"ERROR","msg":"Failed to retrieve payments list","error":"failed to execute query: pq: column \"company_id\" does not exist"}
+{"time":"2024-12-28T23:09:37.977551008+05:00","level":"INFO","msg":"GetPayment called","payment_id":"a"}
+{"time":"2024-12-28T23:09:37.980328368+05:00","level":"ERROR","msg":"Failed to retrieve payment","payment_id":"a","error":"failed to get payment: pq: invalid input syntax for type uuid: \"a\""}
+{"time":"2024-12-28T23:09:57.127182293+05:00","level":"INFO","msg":"GetClientDebts called","client_id":""}
+{"time":"2024-12-28T23:10:14.787226567+05:00","level":"INFO","msg":"GetPaymentsByDebtId called","debt_id":"e52038c5-4c45-42f3-9b78-c9e803ae6b87"}
+{"time":"2024-12-28T23:10:14.788336961+05:00","level":"INFO","msg":"Payments retrieved by debt ID successfully","debt_id":"e52038c5-4c45-42f3-9b78-c9e803ae6b87","count":2}
+{"time":"2024-12-28T23:10:24.66355507+05:00","level":"INFO","msg":"GetDebt called","debt_id":"e52038c5-4c45-42f3-9b78-c9e803ae6b87"}
+{"time":"2024-12-28T23:10:38.060366436+05:00","level":"INFO","msg":"GetPayment called","payment_id":"e52038c5-4c45-42f3-9b78-c9e803ae6b87"}
+{"time":"2024-12-28T23:10:38.061019338+05:00","level":"ERROR","msg":"Failed to retrieve payment","payment_id":"e52038c5-4c45-42f3-9b78-c9e803ae6b87","error":"payment not found: sql: no rows in result set"}
+{"time":"2024-12-28T23:10:56.582934582+05:00","level":"INFO","msg":"GetPayment called","payment_id":"1f09ff43-5f3f-48a1-86c1-4d7c3d476ec0"}
+{"time":"2024-12-28T23:10:56.583731026+05:00","level":"INFO","msg":"Payment retrieved successfully","payment_id":"1f09ff43-5f3f-48a1-86c1-4d7c3d476ec0"}

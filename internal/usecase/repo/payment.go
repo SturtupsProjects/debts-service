@@ -6,6 +6,7 @@ import (
 	"debts-service/internal/usecase"
 	"fmt"
 	"github.com/jmoiron/sqlx"
+	"strings"
 )
 
 type paymentRepo struct {
@@ -16,8 +17,7 @@ func NewPaymentRepo(db *sqlx.DB) usecase.PaymentsRepo {
 	return &paymentRepo{db: db}
 }
 
-
-// GetPayment retrieves a specific payment
+// GetPayment retrieves a specific payment by its ID
 func (p *paymentRepo) GetPayment(in *pb.PaymentID) (*pb.Payment, error) {
 	var payment pb.Payment
 
@@ -26,6 +26,7 @@ func (p *paymentRepo) GetPayment(in *pb.PaymentID) (*pb.Payment, error) {
         FROM payments
         WHERE id = $1`
 
+	// Use QueryRowx for a single result
 	err := p.db.QueryRowx(query, in.Id).Scan(
 		&payment.Id,
 		&payment.InstallmentId,
@@ -44,24 +45,45 @@ func (p *paymentRepo) GetPayment(in *pb.PaymentID) (*pb.Payment, error) {
 }
 
 // GetPayments retrieves payments based on filter criteria
-// GetPayments retrieves payments based on filter criteria
 func (p *paymentRepo) GetPayments(in *pb.FilterPayment) (*pb.PaymentList, error) {
 	var payments []*pb.Payment
+	baseQuery := `
+		SELECT id, installment_id, payment_date, payment_amount, created_at
+		FROM payments
+		WHERE company_id = $1` // Жёсткое условие для company_id
+	var args []interface{}
+	args = append(args, in.CompanyId) // Первым параметром всегда будет company_id
 
-	query := `
-        SELECT id, installment_id, payment_date, payment_amount, created_at
-        FROM payments
-        WHERE (COALESCE($1, '') = '' OR installment_id = $1)
-          AND (COALESCE($2, '') = '' OR payment_date >= $2::timestamp)
-          AND (COALESCE($3, '') = '' OR payment_date <= $3::timestamp)
-        ORDER BY payment_date DESC`
+	var conditions []string
 
-	rows, err := p.db.Queryx(query, in.InstallmentId, in.StartDate, in.EndDate)
+	if in.InstallmentId != "" {
+		conditions = append(conditions, fmt.Sprintf("installment_id = $%d", len(args)+1))
+		args = append(args, in.InstallmentId)
+	}
+
+	if in.StartDate != "" {
+		conditions = append(conditions, fmt.Sprintf("payment_date >= $%d", len(args)+1))
+		args = append(args, in.StartDate)
+	}
+
+	if in.EndDate != "" {
+		conditions = append(conditions, fmt.Sprintf("payment_date <= $%d", len(args)+1))
+		args = append(args, in.EndDate)
+	}
+
+	// Если есть дополнительные условия, добавляем их в запрос
+	if len(conditions) > 0 {
+		baseQuery += " AND " + strings.Join(conditions, " AND ")
+	}
+
+	// Выполнение запроса
+	rows, err := p.db.Queryx(baseQuery, args...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get payments: %w", err)
+		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}
 	defer rows.Close()
 
+	// Чтение строк из результата
 	for rows.Next() {
 		var payment pb.Payment
 		if err := rows.Scan(
@@ -71,20 +93,20 @@ func (p *paymentRepo) GetPayments(in *pb.FilterPayment) (*pb.PaymentList, error)
 			&payment.PaymentAmount,
 			&payment.CreatedAt,
 		); err != nil {
-			return nil, fmt.Errorf("failed to scan payment: %w", err)
+			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
 		payments = append(payments, &payment)
 	}
 
-	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating over payments: %w", err)
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error while iterating rows: %w", err)
 	}
 
 	return &pb.PaymentList{Payments: payments}, nil
 }
 
-// GetPaymentsByDebtId retrieves all payments for a specific installment
-func (p *paymentRepo) GetPaymentsByDebtId(in *pb.DebtID) (*pb.PaymentList, error) {
+// GetPaymentsByDebtId retrieves all payments for a specific debt installment
+func (p *paymentRepo) GetPaymentsByDebtId(in *pb.DebtsID) (*pb.PaymentList, error) {
 	var payments []*pb.Payment
 
 	query := `
@@ -93,12 +115,14 @@ func (p *paymentRepo) GetPaymentsByDebtId(in *pb.DebtID) (*pb.PaymentList, error
         WHERE installment_id = $1
         ORDER BY payment_date DESC`
 
+	// Execute the query with the provided installment ID
 	rows, err := p.db.Queryx(query, in.Id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get installment payments: %w", err)
 	}
 	defer rows.Close()
 
+	// Iterate over the result set
 	for rows.Next() {
 		var payment pb.Payment
 		if err := rows.Scan(
@@ -113,6 +137,7 @@ func (p *paymentRepo) GetPaymentsByDebtId(in *pb.DebtID) (*pb.PaymentList, error
 		payments = append(payments, &payment)
 	}
 
+	// Check for errors after iterating over rows
 	if err = rows.Err(); err != nil {
 		return nil, fmt.Errorf("error iterating over payments: %w", err)
 	}

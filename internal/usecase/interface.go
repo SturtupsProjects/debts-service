@@ -12,15 +12,15 @@ type ClientsRepo interface {
 }
 
 type DebtsRepo interface {
-	CreateDebt(in *pb.DebtRequest) (*pb.Debt, error)
-	GetDebt(in *pb.DebtID) (*pb.Debt, error)
-	GetListDebts(in *pb.FilterDebt) (*pb.DebtsList, error)
+	CreateDebt(in *pb.DebtsRequest) (*pb.Debts, error)
+	GetDebt(in *pb.DebtsID) (*pb.Debts, error)
+	GetListDebts(in *pb.FilterDebts) (*pb.DebtsList, error)
 	GetClientDebts(in *pb.ClientID) (*pb.DebtsList, error)
-	PayPayment(in *pb.PayDebtReq) (*pb.Debt, error)
+	PayPayment(in *pb.PayDebtsReq) (*pb.Debts, error)
 }
 
 type PaymentsRepo interface {
 	GetPayment(in *pb.PaymentID) (*pb.Payment, error)
-	GetPaymentsByDebtId(in *pb.DebtID) (*pb.PaymentList, error)
+	GetPaymentsByDebtId(in *pb.DebtsID) (*pb.PaymentList, error)
 	GetPayments(in *pb.FilterPayment) (*pb.PaymentList, error)
 }

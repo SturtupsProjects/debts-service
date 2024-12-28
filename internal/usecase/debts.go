@@ -10,74 +10,109 @@ import (
 
 type DebtsServiceServer struct {
 	pb.UnimplementedDebtsServiceServer
-	repo DebtsRepo
-	log  *slog.Logger
+	repo  DebtsRepo
+	repo1 PaymentsRepo
+	log   *slog.Logger
 }
 
-func NewDebtsServiceServer(repo DebtsRepo, log *slog.Logger) *DebtsServiceServer {
-	return &DebtsServiceServer{repo: repo, log: log}
+func NewDebtsServiceServer(repo DebtsRepo, repo1 PaymentsRepo, log *slog.Logger) *DebtsServiceServer {
+	return &DebtsServiceServer{repo: repo, repo1: repo1, log: log}
 }
 
-func (s *DebtsServiceServer) CreateDebt(ctx context.Context, req *pb.DebtRequest) (*pb.Debt, error) {
-	s.log.Info("CreateDebt called", "client_id", req.ClientId)
+func (s *DebtsServiceServer) CreateDebts(ctx context.Context, in *pb.DebtsRequest) (*pb.Debts, error) {
+	s.log.Info("CreateDebt called", "client_id", in.ClientId)
 
-	debt, err := s.repo.CreateDebt(req)
+	debt, err := s.repo.CreateDebt(in)
 	if err != nil {
 		s.log.Error("Failed to create debt", "error", err)
 		return nil, fmt.Errorf("could not create debt: %w", err)
 	}
 
-	s.log.Info("Debt created successfully", "debt_id", debt.Id)
 	return debt, nil
 }
 
-func (s *DebtsServiceServer) GetDebt(ctx context.Context, req *pb.DebtID) (*pb.Debt, error) {
-	s.log.Info("GetDebt called", "debt_id", req.Id)
+func (s *DebtsServiceServer) GetDebts(ctx context.Context, in *pb.DebtsID) (*pb.Debts, error) {
+	s.log.Info("GetDebt called", "debt_id", in.Id)
 
-	debt, err := s.repo.GetDebt(req)
+	debt, err := s.repo.GetDebt(in)
 	if err != nil {
-		s.log.Error("Failed to retrieve debt", "debt_id", req.Id, "error", err)
+		s.log.Error("Failed to retrieve debt", "debt_id", in.Id, "error", err)
 		return nil, fmt.Errorf("could not retrieve debt: %w", err)
 	}
 
-	s.log.Info("Debt retrieved successfully", "debt_id", debt.Id)
 	return debt, nil
 }
 
-func (s *DebtsServiceServer) GetListDebts(ctx context.Context, req *pb.FilterDebt) (*pb.DebtsList, error) {
-	s.log.Info("GetListDebts called", "filters", req)
+func (s *DebtsServiceServer) PayDebts(ctx context.Context, in *pb.PayDebtsReq) (*pb.Debts, error) {
+	s.log.Info("GetListDebts called", "filters", in)
 
-	debts, err := s.repo.GetListDebts(req)
+	debts, err := s.repo.PayPayment(in)
 	if err != nil {
 		s.log.Error("Failed to retrieve debts list", "error", err)
 		return nil, fmt.Errorf("could not retrieve debts list: %w", err)
 	}
 
-	s.log.Info("Debts list retrieved successfully", "count", len(debts.Debts))
 	return debts, nil
 }
 
-func (s *DebtsServiceServer) GetClientDebts(ctx context.Context, req *pb.ClientID) (*pb.DebtsList, error) {
-	s.log.Info("GetClientDebts called", "client_id", req.Id)
+func (s *DebtsServiceServer) GetListDebts(ctx context.Context, in *pb.FilterDebts) (*pb.DebtsList, error) {
+	s.log.Info("GetClientDebts called", "client_id", in.CompanyId)
 
-	debts, err := s.repo.GetClientDebts(req)
+	debts, err := s.repo.GetListDebts(in)
 	if err != nil {
-		s.log.Error("Failed to retrieve client debts", "client_id", req.Id, "error", err)
+		s.log.Error("Failed to retrieve client debts", "client_id", in.CompanyId, "error", err)
 		return nil, fmt.Errorf("could not retrieve client debts: %w", err)
 	}
 
-	s.log.Info("Client debts retrieved successfully", "client_id", req.Id, "count", len(debts.Debts))
 	return debts, nil
 }
-func (s *DebtsServiceServer) PayDebt(ctx context.Context, req *pb.PayDebtReq) (*pb.Debt, error) {
-	s.log.Info("PayDebt called", "debt_id", req.DebtId)
 
-	debt, err := s.repo.PayPayment(req)
+func (s *DebtsServiceServer) GetClientDebts(ctx context.Context, in *pb.ClientID) (*pb.DebtsList, error) {
+
+	debt, err := s.repo.GetClientDebts(in)
 	if err != nil {
-		s.log.Error("Failed to pay debt", "debt_id", req.DebtId, "error", err)
+		s.log.Error("Failed to pay debt", "debt_id", in.Id, "error", err)
 		return nil, fmt.Errorf("could not pay debt: %w", err)
 	}
 
-	s.log.Info("Debt paid successfully", "debt_id", debt.Id)
 	return debt, nil
+}
+
+func (s *DebtsServiceServer) GetPayment(ctx context.Context, in *pb.PaymentID) (*pb.Payment, error) {
+	s.log.Info("GetPayment called", "payment_id", in.Id)
+
+	payment, err := s.repo1.GetPayment(in)
+	if err != nil {
+		s.log.Error("Failed to retrieve payment", "payment_id", in.Id, "error", err)
+		return nil, fmt.Errorf("could not retrieve payment: %w", err)
+	}
+
+	s.log.Info("Payment retrieved successfully", "payment_id", payment.Id)
+	return payment, nil
+}
+
+func (s *DebtsServiceServer) GetPaymentsByDebtsId(ctx context.Context, in *pb.DebtsID) (*pb.PaymentList, error) {
+	s.log.Info("GetPaymentsByDebtId called", "debt_id", in.Id)
+
+	payments, err := s.repo1.GetPaymentsByDebtId(in)
+	if err != nil {
+		s.log.Error("Failed to retrieve payments by debt ID", "debt_id", in.Id, "error", err)
+		return nil, fmt.Errorf("could not retrieve payments by debt ID: %w", err)
+	}
+
+	s.log.Info("Payments retrieved by debt ID successfully", "debt_id", in.Id, "count", len(payments.Payments))
+	return payments, nil
+}
+
+func (s *DebtsServiceServer) GetPayments(ctx context.Context, in *pb.FilterPayment) (*pb.PaymentList, error) {
+	s.log.Info("GetPayments called", "filters", in)
+
+	payments, err := s.repo1.GetPayments(in)
+	if err != nil {
+		s.log.Error("Failed to retrieve payments list", "error", err)
+		return nil, fmt.Errorf("could not retrieve payments list: %w", err)
+	}
+
+	s.log.Info("Payments list retrieved successfully", "count", len(payments.Payments))
+	return payments, nil
 }

@@ -20,25 +20,24 @@ func NewInstallmentRepo(db *sqlx.DB) usecase.DebtsRepo {
 }
 
 // CreateDebt creates a new installment record
-func (d *installmentRepo) CreateDebt(in *pb.DebtRequest) (*pb.Debt, error) {
-	var debt pb.Debt
+func (d *installmentRepo) CreateDebt(in *pb.DebtsRequest) (*pb.Debts, error) {
+	var debt pb.Debts
 	var lastPaymentDate sql.NullString
 	query := `
-    INSERT INTO installment (id, months_duration, client_id, total_amount, present_month, amount_paid)
-    VALUES (gen_random_uuid(), $1, $2, $3, 1, 0)
-    RETURNING id, months_duration, present_month, total_amount, amount_paid, 
-              COALESCE(last_payment_date, NULL) as last_payment_date, 
-              is_fully_paid, created_at`
+		INSERT INTO installment (id, client_id, total_amount, amount_paid, currency_code, company_id)
+		VALUES (gen_random_uuid(), $1, $2, 0, $3, $4)
+		RETURNING id, client_id, total_amount, amount_paid, last_payment_date, is_fully_paid, created_at, currency_code, company_id`
 
-	err := d.db.QueryRowx(query, in.MonthsDuration, in.ClientId, in.TotalAmount).Scan(
+	err := d.db.QueryRowx(query, in.ClientId, in.TotalAmount, in.CurrencyCode, in.CompanyId).Scan(
 		&debt.Id,
-		&debt.MonthsDuration,
-		&debt.PresentMonth,
+		&debt.ClientId,
 		&debt.TotalAmount,
 		&debt.AmountPaid,
 		&lastPaymentDate,
 		&debt.IsFullyPaid,
 		&debt.CreatedAt,
+		&debt.CurrencyCode,
+		&debt.CompanyId,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create installment: %w", err)
@@ -52,24 +51,25 @@ func (d *installmentRepo) CreateDebt(in *pb.DebtRequest) (*pb.Debt, error) {
 }
 
 // GetDebt retrieves an installment by ID
-func (d *installmentRepo) GetDebt(in *pb.DebtID) (*pb.Debt, error) {
-	var debt pb.Debt
+func (d *installmentRepo) GetDebt(in *pb.DebtsID) (*pb.Debts, error) {
+	var debt pb.Debts
 	var lastPaymentDate sql.NullString
 
 	query := `
-        SELECT id, months_duration, present_month, total_amount, amount_paid, last_payment_date, is_fully_paid, created_at
+        SELECT id, client_id, total_amount, amount_paid, last_payment_date, is_fully_paid, created_at, currency_code, company_id
         FROM installment
-        WHERE id = $1`
+        WHERE id = $1 AND company_id = $2`
 
-	err := d.db.QueryRowx(query, in.Id).Scan(
+	err := d.db.QueryRowx(query, in.Id, in.CompanyId).Scan(
 		&debt.Id,
-		&debt.MonthsDuration,
-		&debt.PresentMonth,
+		&debt.ClientId,
 		&debt.TotalAmount,
 		&debt.AmountPaid,
 		&lastPaymentDate,
 		&debt.IsFullyPaid,
 		&debt.CreatedAt,
+		&debt.CurrencyCode,
+		&debt.CompanyId,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -87,17 +87,22 @@ func (d *installmentRepo) GetDebt(in *pb.DebtID) (*pb.Debt, error) {
 }
 
 // GetListDebts retrieves a filtered list of installments
-func (d *installmentRepo) GetListDebts(in *pb.FilterDebt) (*pb.DebtsList, error) {
-	var debts []*pb.Debt
+func (d *installmentRepo) GetListDebts(in *pb.FilterDebts) (*pb.DebtsList, error) {
+	var debts []*pb.Debts
 	var args []interface{}
 	var filters []string
 	argIndex := 1
 
-	query := `SELECT id, months_duration, present_month, total_amount, amount_paid, last_payment_date, is_fully_paid, created_at FROM installment`
+	query := `SELECT id, client_id, total_amount, amount_paid, last_payment_date, is_fully_paid, created_at, currency_code, company_id FROM installment`
 
-	if in.MonthsDuration > 0 {
-		filters = append(filters, fmt.Sprintf("months_duration = $%d", argIndex))
-		args = append(args, in.MonthsDuration)
+	if in.TotalAmountMin > 0 {
+		filters = append(filters, fmt.Sprintf("total_amount >= $%d", argIndex))
+		args = append(args, in.TotalAmountMin)
+		argIndex++
+	}
+	if in.TotalAmountMax > 0 {
+		filters = append(filters, fmt.Sprintf("total_amount <= $%d", argIndex))
+		args = append(args, in.TotalAmountMax)
 		argIndex++
 	}
 	if in.CreatedAfter != "" {
@@ -110,14 +115,14 @@ func (d *installmentRepo) GetListDebts(in *pb.FilterDebt) (*pb.DebtsList, error)
 		args = append(args, in.CreatedBefore)
 		argIndex++
 	}
-	if in.TotalAmountMin > 0 {
-		filters = append(filters, fmt.Sprintf("total_amount >= $%d", argIndex))
-		args = append(args, in.TotalAmountMin)
+	if in.CurrencyCode != "" {
+		filters = append(filters, fmt.Sprintf("currency_code = $%d", argIndex))
+		args = append(args, in.CurrencyCode)
 		argIndex++
 	}
-	if in.TotalAmountMax > 0 {
-		filters = append(filters, fmt.Sprintf("total_amount <= $%d", argIndex))
-		args = append(args, in.TotalAmountMax)
+	if in.CompanyId != "" {
+		filters = append(filters, fmt.Sprintf("company_id = $%d", argIndex))
+		args = append(args, in.CompanyId)
 		argIndex++
 	}
 
@@ -132,17 +137,18 @@ func (d *installmentRepo) GetListDebts(in *pb.FilterDebt) (*pb.DebtsList, error)
 	defer rows.Close()
 
 	for rows.Next() {
-		var debt pb.Debt
+		var debt pb.Debts
 		var lastPaymentDate sql.NullString
 		if err := rows.Scan(
 			&debt.Id,
-			&debt.MonthsDuration,
-			&debt.PresentMonth,
+			&debt.ClientId,
 			&debt.TotalAmount,
 			&debt.AmountPaid,
 			&lastPaymentDate,
 			&debt.IsFullyPaid,
 			&debt.CreatedAt,
+			&debt.CurrencyCode,
+			&debt.CompanyId,
 		); err != nil {
 			return nil, fmt.Errorf("failed to scan installment: %w", err)
 		}
@@ -154,15 +160,15 @@ func (d *installmentRepo) GetListDebts(in *pb.FilterDebt) (*pb.DebtsList, error)
 		debts = append(debts, &debt)
 	}
 
-	return &pb.DebtsList{Debts: debts}, nil
+	return &pb.DebtsList{Installments: debts}, nil
 }
 
 // GetClientDebts retrieves all installments for a specific client
 func (d *installmentRepo) GetClientDebts(in *pb.ClientID) (*pb.DebtsList, error) {
-	var debts []*pb.Debt
+	var debts []*pb.Debts
 
 	query := `
-        SELECT id, months_duration, present_month, total_amount, amount_paid, last_payment_date, is_fully_paid, created_at
+        SELECT id, client_id, total_amount, amount_paid, last_payment_date, is_fully_paid, created_at, currency_code, company_id
         FROM installment
         WHERE client_id = $1`
 
@@ -173,17 +179,18 @@ func (d *installmentRepo) GetClientDebts(in *pb.ClientID) (*pb.DebtsList, error)
 	defer rows.Close()
 
 	for rows.Next() {
-		var debt pb.Debt
+		var debt pb.Debts
 		var lastPaymentDate sql.NullString
 		if err := rows.Scan(
 			&debt.Id,
-			&debt.MonthsDuration,
-			&debt.PresentMonth,
+			&debt.ClientId,
 			&debt.TotalAmount,
 			&debt.AmountPaid,
 			&lastPaymentDate,
 			&debt.IsFullyPaid,
 			&debt.CreatedAt,
+			&debt.CurrencyCode,
+			&debt.CompanyId,
 		); err != nil {
 			return nil, fmt.Errorf("failed to scan installment: %w", err)
 		}
@@ -195,11 +202,11 @@ func (d *installmentRepo) GetClientDebts(in *pb.ClientID) (*pb.DebtsList, error)
 		debts = append(debts, &debt)
 	}
 
-	return &pb.DebtsList{Debts: debts}, nil
+	return &pb.DebtsList{Installments: debts}, nil
 }
 
 // PayPayment records a payment for an installment
-func (d *installmentRepo) PayPayment(in *pb.PayDebtReq) (*pb.Debt, error) {
+func (d *installmentRepo) PayPayment(in *pb.PayDebtsReq) (*pb.Debts, error) {
 	tx, err := d.db.Beginx()
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
@@ -216,29 +223,25 @@ func (d *installmentRepo) PayPayment(in *pb.PayDebtReq) (*pb.Debt, error) {
 		return nil, fmt.Errorf("failed to insert payment: %w", err)
 	}
 
-	// Update installment record
-	var debt pb.Debt
+	// Update installment record (do not modify is_fully_paid column directly)
+	var debt pb.Debts
 	debtQuery := `
         UPDATE installment
         SET amount_paid = amount_paid + $1,
-            last_payment_date = CURRENT_TIMESTAMP,
-            present_month = present_month + 1,
-            is_fully_paid = CASE 
-                WHEN amount_paid + $1 >= total_amount THEN true 
-                ELSE false 
-            END
+            last_payment_date = CURRENT_TIMESTAMP
         WHERE id = $2
-        RETURNING id, months_duration, present_month, total_amount, amount_paid, last_payment_date, is_fully_paid, created_at`
+        RETURNING id, client_id, total_amount, amount_paid, last_payment_date, is_fully_paid, created_at, currency_code, company_id`
 
 	err = tx.QueryRowx(debtQuery, in.PaidAmount, in.DebtId).Scan(
 		&debt.Id,
-		&debt.MonthsDuration,
-		&debt.PresentMonth,
+		&debt.ClientId,
 		&debt.TotalAmount,
 		&debt.AmountPaid,
 		&debt.LastPaymentDate,
 		&debt.IsFullyPaid,
 		&debt.CreatedAt,
+		&debt.CurrencyCode,
+		&debt.CompanyId,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -247,6 +250,7 @@ func (d *installmentRepo) PayPayment(in *pb.PayDebtReq) (*pb.Debt, error) {
 		return nil, fmt.Errorf("failed to update installment: %w", err)
 	}
 
+	// Commit transaction
 	if err = tx.Commit(); err != nil {
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
