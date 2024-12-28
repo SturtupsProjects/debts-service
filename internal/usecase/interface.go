@@ -16,10 +16,10 @@ type DebtsRepo interface {
 	GetDebt(in *pb.DebtID) (*pb.Debt, error)
 	GetListDebts(in *pb.FilterDebt) (*pb.DebtsList, error)
 	GetClientDebts(in *pb.ClientID) (*pb.DebtsList, error)
+	PayPayment(in *pb.PayDebtReq) (*pb.Debt, error)
 }
 
 type PaymentsRepo interface {
-	PayPayment(in *pb.PayDebtReq) (*pb.Debt, error)
 	GetPayment(in *pb.PaymentID) (*pb.Payment, error)
 	GetPaymentsByDebtId(in *pb.DebtID) (*pb.PaymentList, error)
 	GetPayments(in *pb.FilterPayment) (*pb.PaymentList, error)

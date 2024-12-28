@@ -17,13 +17,12 @@ CREATE TABLE installment
     id                UUID PRIMARY KEY,
     months_duration   INT NOT NULL CHECK (months_duration > 0),
     present_month     INT DEFAULT 1 CHECK (present_month > 0),
-    client_id         UUID NOT NULL REFERENCES clients(id),
+    client_id         UUID NOT NULL ,
     total_amount      INT NOT NULL CHECK (total_amount >= 0),
     amount_paid       INT DEFAULT 0 CHECK (amount_paid >= 0),
     last_payment_date TIMESTAMP,
     is_fully_paid     BOOLEAN GENERATED ALWAYS AS (total_amount = amount_paid) STORED,
-    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_client FOREIGN KEY (client_id) REFERENCES clients (id) ON DELETE CASCADE
+    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE payments

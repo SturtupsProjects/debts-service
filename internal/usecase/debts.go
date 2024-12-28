@@ -69,3 +69,15 @@ func (s *DebtsServiceServer) GetClientDebts(ctx context.Context, req *pb.ClientI
 	s.log.Info("Client debts retrieved successfully", "client_id", req.Id, "count", len(debts.Debts))
 	return debts, nil
 }
+func (s *DebtsServiceServer) PayDebt(ctx context.Context, req *pb.PayDebtReq) (*pb.Debt, error) {
+	s.log.Info("PayDebt called", "debt_id", req.DebtId)
+
+	debt, err := s.repo.PayPayment(req)
+	if err != nil {
+		s.log.Error("Failed to pay debt", "debt_id", req.DebtId, "error", err)
+		return nil, fmt.Errorf("could not pay debt: %w", err)
+	}
+
+	s.log.Info("Debt paid successfully", "debt_id", debt.Id)
+	return debt, nil
+}

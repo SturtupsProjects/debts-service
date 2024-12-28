@@ -16,61 +16,6 @@ func NewPaymentRepo(db *sqlx.DB) usecase.PaymentsRepo {
 	return &paymentRepo{db: db}
 }
 
-// PayPayment records a payment for an installment
-func (p *paymentRepo) PayPayment(in *pb.PayDebtReq) (*pb.Debt, error) {
-	tx, err := p.db.Beginx()
-	if err != nil {
-		return nil, fmt.Errorf("failed to begin transaction: %w", err)
-	}
-	defer tx.Rollback()
-
-	// Insert payment record
-	paymentQuery := `
-        INSERT INTO payments (id, installment_id, payment_amount, payment_date)
-        VALUES (gen_random_uuid(), $1, $2, CURRENT_TIMESTAMP)`
-
-	_, err = tx.Exec(paymentQuery, in.DebtId, in.PaidAmount)
-	if err != nil {
-		return nil, fmt.Errorf("failed to insert payment: %w", err)
-	}
-
-	// Update installment record
-	var debt pb.Debt
-	debtQuery := `
-        UPDATE installment
-        SET amount_paid = amount_paid + $1,
-            last_payment_date = CURRENT_TIMESTAMP,
-            present_month = present_month + 1,
-            is_fully_paid = CASE 
-                WHEN amount_paid + $1 >= total_amount THEN true 
-                ELSE false 
-            END
-        WHERE id = $2
-        RETURNING id, months_duration, present_month, total_amount, amount_paid, last_payment_date, is_fully_paid, created_at`
-
-	err = tx.QueryRowx(debtQuery, in.PaidAmount, in.DebtId).Scan(
-		&debt.Id,
-		&debt.MonthsDuration,
-		&debt.PresentMonth,
-		&debt.TotalAmount,
-		&debt.AmountPaid,
-		&debt.LastPaymentDate,
-		&debt.IsFullyPaid,
-		&debt.CreatedAt,
-	)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("debt not found: %w", err)
-		}
-		return nil, fmt.Errorf("failed to update installment: %w", err)
-	}
-
-	if err = tx.Commit(); err != nil {
-		return nil, fmt.Errorf("failed to commit transaction: %w", err)
-	}
-
-	return &debt, nil
-}
 
 // GetPayment retrieves a specific payment
 func (p *paymentRepo) GetPayment(in *pb.PaymentID) (*pb.Payment, error) {
