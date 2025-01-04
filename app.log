@@ -45,3 +45,6 @@
 {"time":"2024-12-28T23:10:38.061019338+05:00","level":"ERROR","msg":"Failed to retrieve payment","payment_id":"e52038c5-4c45-42f3-9b78-c9e803ae6b87","error":"payment not found: sql: no rows in result set"}
 {"time":"2024-12-28T23:10:56.582934582+05:00","level":"INFO","msg":"GetPayment called","payment_id":"1f09ff43-5f3f-48a1-86c1-4d7c3d476ec0"}
 {"time":"2024-12-28T23:10:56.583731026+05:00","level":"INFO","msg":"Payment retrieved successfully","payment_id":"1f09ff43-5f3f-48a1-86c1-4d7c3d476ec0"}
+{"time":"2025-01-04T23:20:03.72392172+05:00","level":"INFO","msg":"GetClientDebts called","client_id":""}
+{"time":"2025-01-04T23:21:32.116964743+05:00","level":"INFO","msg":"GetClientDebts called","client_id":""}
+{"time":"2025-01-04T23:22:16.060689506+05:00","level":"INFO","msg":"GetClientDebts called","client_id":""}
