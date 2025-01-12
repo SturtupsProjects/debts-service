@@ -130,6 +130,17 @@ func (d *installmentRepo) GetListDebts(in *pb.FilterDebts) (*pb.DebtsList, error
 		query += " WHERE " + strings.Join(filters, " AND ")
 	}
 
+	if in.Limit > 0 {
+		query += fmt.Sprintf(" LIMIT $%d", argIndex)
+		args = append(args, in.Limit)
+		argIndex++
+	}
+
+	if in.Page > 0 {
+		query += fmt.Sprintf(" OFFSET $%d", argIndex)
+		args = append(args, in.Limit*(in.Page-1))
+	}
+
 	rows, err := d.db.Queryx(query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query installments: %w", err)
