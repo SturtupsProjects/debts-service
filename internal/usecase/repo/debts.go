@@ -96,7 +96,8 @@ func (d *installmentRepo) GetListDebts(in *pb.FilterDebts) (*pb.DebtsList, error
 	)
 
 	// Базовый запрос
-	query := `SELECT id, client_id, total_amount, amount_paid, last_payment_date, is_fully_paid, created_at, currency_code, company_id
+	query := `SELECT id, client_id, total_amount, amount_paid, last_payment_date, is_fully_paid, created_at, currency_code, company_id,
+    COUNT(*) OVER() AS total_count
 	FROM installment WHERE company_id = $1`
 	args = append(args, in.CompanyId)
 
@@ -155,6 +156,8 @@ func (d *installmentRepo) GetListDebts(in *pb.FilterDebts) (*pb.DebtsList, error
 	}
 	defer rows.Close()
 
+	var count int64
+
 	// Обрабатываем результаты
 	for rows.Next() {
 		var debt pb.Debts
@@ -170,6 +173,7 @@ func (d *installmentRepo) GetListDebts(in *pb.FilterDebts) (*pb.DebtsList, error
 			&debt.CreatedAt,
 			&debt.CurrencyCode,
 			&debt.CompanyId,
+			&count,
 		); err != nil {
 			return nil, fmt.Errorf("failed to scan installment: %w", err)
 		}
@@ -184,7 +188,7 @@ func (d *installmentRepo) GetListDebts(in *pb.FilterDebts) (*pb.DebtsList, error
 	}
 
 	// Возвращаем результат
-	return &pb.DebtsList{Installments: debts}, nil
+	return &pb.DebtsList{Installments: debts, TotalCount: count}, nil
 }
 
 // GetClientDebts retrieves all installments for a specific client
