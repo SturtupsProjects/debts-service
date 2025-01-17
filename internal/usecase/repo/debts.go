@@ -241,6 +241,10 @@ func (d *installmentRepo) GetClientDebts(in *pb.ClientID) (*pb.DebtsList, error)
 
 // PayPayment records a payment for an installment
 func (d *installmentRepo) PayPayment(in *pb.PayDebtsReq) (*pb.Debts, error) {
+	// Проверяем, что DebtId не пустой
+	if in.DebtId == "" {
+		return nil, fmt.Errorf("invalid input: DebtId is required")
+	}
 
 	id := uuid.NewString()
 
