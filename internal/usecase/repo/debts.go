@@ -97,7 +97,7 @@ func (d *installmentRepo) GetListDebts(in *pb.FilterDebts) (*pb.DebtsList, error
 
 	// Базовый запрос
 	query := `SELECT id, client_id, total_amount, amount_paid, last_payment_date, is_fully_paid, created_at, currency_code, company_id,
-    COUNT(*) OVER() AS total_count
+		COUNT(*) OVER() AS total_count
 	FROM installment WHERE company_id = $1`
 	args = append(args, in.CompanyId)
 
@@ -138,15 +138,16 @@ func (d *installmentRepo) GetListDebts(in *pb.FilterDebts) (*pb.DebtsList, error
 		query += " AND " + strings.Join(filters, " AND ")
 	}
 
-	// Лимит и пагинация
+	// Добавляем лимит и офсет
 	if in.Limit > 0 {
 		query += fmt.Sprintf(" LIMIT $%d", argIdx)
-		args = append(args, in.Limit)
+		args = append(args, int64(in.Limit)) // Приводим к int64
 		argIdx++
 	}
 	if in.Page > 0 {
+		offset := int64(in.Limit * (in.Page - 1))
 		query += fmt.Sprintf(" OFFSET $%d", argIdx)
-		args = append(args, in.Limit*(in.Page-1))
+		args = append(args, offset) // Приводим к int64
 	}
 
 	// Выполняем запрос
@@ -156,7 +157,7 @@ func (d *installmentRepo) GetListDebts(in *pb.FilterDebts) (*pb.DebtsList, error
 	}
 	defer rows.Close()
 
-	var count int64
+	var totalCount int64
 
 	// Обрабатываем результаты
 	for rows.Next() {
@@ -173,22 +174,26 @@ func (d *installmentRepo) GetListDebts(in *pb.FilterDebts) (*pb.DebtsList, error
 			&debt.CreatedAt,
 			&debt.CurrencyCode,
 			&debt.CompanyId,
-			&count,
+			&totalCount,
 		); err != nil {
 			return nil, fmt.Errorf("failed to scan installment: %w", err)
 		}
 
 		// Обрабатываем nullable поля
-		debt.LastPaymentDate = ""
 		if lastPaymentDate.Valid {
 			debt.LastPaymentDate = lastPaymentDate.String
+		} else {
+			debt.LastPaymentDate = ""
 		}
 
 		debts = append(debts, &debt)
 	}
 
 	// Возвращаем результат
-	return &pb.DebtsList{Installments: debts, TotalCount: count}, nil
+	return &pb.DebtsList{
+		Installments: debts,
+		TotalCount:   totalCount,
+	}, nil
 }
 
 // GetClientDebts retrieves all installments for a specific client
