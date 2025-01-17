@@ -7,6 +7,7 @@ import (
 
 	pb "debts-service/internal/generated/debts"
 	"debts-service/internal/usecase"
+	"github.com/google/uuid"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -240,6 +241,9 @@ func (d *installmentRepo) GetClientDebts(in *pb.ClientID) (*pb.DebtsList, error)
 
 // PayPayment records a payment for an installment
 func (d *installmentRepo) PayPayment(in *pb.PayDebtsReq) (*pb.Debts, error) {
+
+	id := uuid.NewString()
+
 	tx, err := d.db.Beginx()
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
@@ -249,9 +253,9 @@ func (d *installmentRepo) PayPayment(in *pb.PayDebtsReq) (*pb.Debts, error) {
 	// Insert payment record
 	paymentQuery := `
         INSERT INTO payments (id, installment_id, payment_amount, payment_date)
-        VALUES (gen_random_uuid(), $1, $2, CURRENT_TIMESTAMP)`
+        VALUES ($1, $2, $3, CURRENT_TIMESTAMP)`
 
-	_, err = tx.Exec(paymentQuery, in.DebtId, in.PaidAmount)
+	_, err = tx.Exec(paymentQuery, id, in.DebtId, in.PaidAmount)
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert payment: %w", err)
 	}
