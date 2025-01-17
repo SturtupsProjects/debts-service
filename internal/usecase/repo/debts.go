@@ -92,7 +92,7 @@ func (d *installmentRepo) GetListDebts(in *pb.FilterDebts) (*pb.DebtsList, error
 		debts   []*pb.Debts
 		args    []interface{}
 		filters []string
-		argIdx  = 1
+		argIdx  = 2
 	)
 
 	// Базовый запрос
