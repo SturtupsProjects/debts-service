@@ -88,68 +88,78 @@ func (d *installmentRepo) GetDebt(in *pb.DebtsID) (*pb.Debts, error) {
 
 // GetListDebts retrieves a filtered list of installments
 func (d *installmentRepo) GetListDebts(in *pb.FilterDebts) (*pb.DebtsList, error) {
-	var debts []*pb.Debts
-	var args []interface{}
-	var filters []string
-	argIndex := 1
+	var (
+		debts   []*pb.Debts
+		args    []interface{}
+		filters []string
+		argIdx  = 1
+	)
 
-	query := `SELECT id, client_id, total_amount, amount_paid, last_payment_date, is_fully_paid, created_at, currency_code, company_id FROM installment`
+	// Базовый запрос
+	query := `SELECT id, client_id, total_amount, amount_paid, last_payment_date, is_fully_paid, created_at, currency_code, company_id
+	FROM installment WHERE company_id = $1`
+	args = append(args, in.CompanyId)
 
+	// Добавляем фильтры
 	if in.TotalAmountMin > 0 {
-		filters = append(filters, fmt.Sprintf("total_amount >= $%d", argIndex))
+		filters = append(filters, fmt.Sprintf("total_amount >= $%d", argIdx))
 		args = append(args, in.TotalAmountMin)
-		argIndex++
+		argIdx++
 	}
 	if in.TotalAmountMax > 0 {
-		filters = append(filters, fmt.Sprintf("total_amount <= $%d", argIndex))
+		filters = append(filters, fmt.Sprintf("total_amount <= $%d", argIdx))
 		args = append(args, in.TotalAmountMax)
-		argIndex++
+		argIdx++
 	}
 	if in.CreatedAfter != "" {
-		filters = append(filters, fmt.Sprintf("created_at >= $%d", argIndex))
+		filters = append(filters, fmt.Sprintf("created_at >= $%d", argIdx))
 		args = append(args, in.CreatedAfter)
-		argIndex++
+		argIdx++
 	}
 	if in.CreatedBefore != "" {
-		filters = append(filters, fmt.Sprintf("created_at <= $%d", argIndex))
+		filters = append(filters, fmt.Sprintf("created_at <= $%d", argIdx))
 		args = append(args, in.CreatedBefore)
-		argIndex++
+		argIdx++
 	}
 	if in.CurrencyCode != "" {
-		filters = append(filters, fmt.Sprintf("currency_code = $%d", argIndex))
+		filters = append(filters, fmt.Sprintf("currency_code = $%d", argIdx))
 		args = append(args, in.CurrencyCode)
-		argIndex++
+		argIdx++
 	}
-	if in.CompanyId != "" {
-		filters = append(filters, fmt.Sprintf("company_id = $%d", argIndex))
-		args = append(args, in.CompanyId)
-		argIndex++
+	if in.Description != "" {
+		filters = append(filters, fmt.Sprintf("description ILIKE $%d", argIdx)) // Используем ILIKE для нечувствительного поиска
+		args = append(args, "%"+in.Description+"%")
+		argIdx++
 	}
 
+	// Объединяем базовый запрос с фильтрами
 	if len(filters) > 0 {
-		query += " WHERE " + strings.Join(filters, " AND ")
+		query += " AND " + strings.Join(filters, " AND ")
 	}
 
+	// Лимит и пагинация
 	if in.Limit > 0 {
-		query += fmt.Sprintf(" LIMIT $%d", argIndex)
+		query += fmt.Sprintf(" LIMIT $%d", argIdx)
 		args = append(args, in.Limit)
-		argIndex++
+		argIdx++
 	}
-
 	if in.Page > 0 {
-		query += fmt.Sprintf(" OFFSET $%d", argIndex)
+		query += fmt.Sprintf(" OFFSET $%d", argIdx)
 		args = append(args, in.Limit*(in.Page-1))
 	}
 
+	// Выполняем запрос
 	rows, err := d.db.Queryx(query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query installments: %w", err)
 	}
 	defer rows.Close()
 
+	// Обрабатываем результаты
 	for rows.Next() {
 		var debt pb.Debts
 		var lastPaymentDate sql.NullString
+
 		if err := rows.Scan(
 			&debt.Id,
 			&debt.ClientId,
@@ -163,14 +173,17 @@ func (d *installmentRepo) GetListDebts(in *pb.FilterDebts) (*pb.DebtsList, error
 		); err != nil {
 			return nil, fmt.Errorf("failed to scan installment: %w", err)
 		}
+
+		// Обрабатываем nullable поля
+		debt.LastPaymentDate = ""
 		if lastPaymentDate.Valid {
 			debt.LastPaymentDate = lastPaymentDate.String
-		} else {
-			debt.LastPaymentDate = ""
 		}
+
 		debts = append(debts, &debt)
 	}
 
+	// Возвращаем результат
 	return &pb.DebtsList{Installments: debts}, nil
 }
 
