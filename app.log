@@ -48,3 +48,8 @@
 {"time":"2025-01-04T23:20:03.72392172+05:00","level":"INFO","msg":"GetClientDebts called","client_id":""}
 {"time":"2025-01-04T23:21:32.116964743+05:00","level":"INFO","msg":"GetClientDebts called","client_id":""}
 {"time":"2025-01-04T23:22:16.060689506+05:00","level":"INFO","msg":"GetClientDebts called","client_id":""}
+{"time":"2025-02-02T21:13:42.99340184+05:00","level":"INFO","msg":"GetTotalDebtSum","req":{"id":"cdb8a9c6-00d2-444e-9ab5-e4cb66a8c6d4"}}
+{"time":"2025-02-02T21:18:29.532482414+05:00","level":"INFO","msg":"GetUserTotalDebtSum","req":{"company_id":"cdb8a9c6-00d2-444e-9ab5-e4cb66a8c6d4","id":"7f360a33-cd4c-469b-a7ed-7c982acd5c35"}}
+{"time":"2025-02-02T21:48:11.034620058+05:00","level":"INFO","msg":"GetClientDebts called","client_id":"cdb8a9c6-00d2-444e-9ab5-e4cb66a8c6d4"}
+{"time":"2025-02-02T21:48:18.179170745+05:00","level":"INFO","msg":"GetClientDebts called","client_id":"cdb8a9c6-00d2-444e-9ab5-e4cb66a8c6d4"}
+{"time":"2025-02-02T21:48:30.142973294+05:00","level":"INFO","msg":"GetClientDebts called","client_id":"cdb8a9c6-00d2-444e-9ab5-e4cb66a8c6d4"}

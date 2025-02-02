@@ -19,7 +19,7 @@ CREATE TABLE installment
     total_amount      DECIMAL(10, 2) NOT NULL CHECK (total_amount >= 0),
     amount_paid       DECIMAL(10, 2) DEFAULT 0 CHECK (amount_paid >= 0),
     last_payment_date DATE,
-    is_fully_paid     BOOLEAN GENERATED ALWAYS AS (total_amount = amount_paid) STORED,
+    is_fully_paid     BOOLEAN GENERATED ALWAYS AS (total_amount <= amount_paid) STORED,
     currency_code     CHAR(3)        NOT NULL CHECK (currency_code IN ('usd', 'uzs')),
     created_at        TIMESTAMP      DEFAULT CURRENT_TIMESTAMP,
     company_id        UUID           NOT NULL

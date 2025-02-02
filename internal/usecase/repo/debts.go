@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -87,22 +88,41 @@ func (d *installmentRepo) GetDebt(in *pb.DebtsID) (*pb.Debts, error) {
 	return &debt, nil
 }
 
-// GetListDebts retrieves a filtered list of installments
 func (d *installmentRepo) GetListDebts(in *pb.FilterDebts) (*pb.DebtsList, error) {
+	if in.CompanyId == "" {
+		return nil, fmt.Errorf("company_id is required")
+	}
+
 	var (
 		debts   []*pb.Debts
 		args    []interface{}
 		filters []string
-		argIdx  = 2
+		argIdx  = 2 // $1 уже используется для company_id
 	)
 
-	// Базовый запрос
-	query := `SELECT id, client_id, total_amount, amount_paid, last_payment_date, is_fully_paid, created_at, currency_code, company_id,
-		COUNT(*) OVER() AS total_count
-	FROM installment WHERE company_id = $1`
+	query := `
+        SELECT 
+            id, 
+            client_id, 
+            total_amount, 
+            amount_paid, 
+            last_payment_date, 
+            is_fully_paid, 
+            created_at, 
+            currency_code, 
+            company_id,
+            COUNT(*) OVER() AS total_count
+        FROM installment 
+        WHERE company_id = $1
+    `
 	args = append(args, in.CompanyId)
 
-	// Добавляем фильтры
+	if in.IsFullyPay != "" {
+		filters = append(filters, fmt.Sprintf("is_fully_paid = $%d", argIdx))
+		args = append(args, in.IsFullyPay)
+		argIdx++
+	}
+
 	if in.TotalAmountMin > 0 {
 		filters = append(filters, fmt.Sprintf("total_amount >= $%d", argIdx))
 		args = append(args, in.TotalAmountMin)
@@ -113,45 +133,37 @@ func (d *installmentRepo) GetListDebts(in *pb.FilterDebts) (*pb.DebtsList, error
 		args = append(args, in.TotalAmountMax)
 		argIdx++
 	}
-	if in.CreatedAfter != "" {
-		filters = append(filters, fmt.Sprintf("created_at >= $%d", argIdx))
-		args = append(args, in.CreatedAfter)
-		argIdx++
-	}
-	if in.CreatedBefore != "" {
-		filters = append(filters, fmt.Sprintf("created_at <= $%d", argIdx))
-		args = append(args, in.CreatedBefore)
-		argIdx++
-	}
+
+	// Фильтр по валюте
 	if in.CurrencyCode != "" {
 		filters = append(filters, fmt.Sprintf("currency_code = $%d", argIdx))
 		args = append(args, in.CurrencyCode)
 		argIdx++
 	}
+
 	if in.Description != "" {
-		filters = append(filters, fmt.Sprintf("description ILIKE $%d", argIdx)) // Используем ILIKE для нечувствительного поиска
+		filters = append(filters, fmt.Sprintf("description ILIKE $%d", argIdx))
 		args = append(args, "%"+in.Description+"%")
 		argIdx++
 	}
 
-	// Объединяем базовый запрос с фильтрами
 	if len(filters) > 0 {
 		query += " AND " + strings.Join(filters, " AND ")
 	}
 
-	// Добавляем лимит и офсет
-	if in.Limit > 0 {
+	query += " ORDER BY created_at DESC"
+
+	if in.Limit > 0 && in.Page > 0 {
+
 		query += fmt.Sprintf(" LIMIT $%d", argIdx)
-		args = append(args, int64(in.Limit)) // Приводим к int64
+		args = append(args, int64(in.Limit))
 		argIdx++
-	}
-	if in.Page > 0 {
-		offset := int64(in.Limit * (in.Page - 1))
+
 		query += fmt.Sprintf(" OFFSET $%d", argIdx)
-		args = append(args, offset) // Приводим к int64
+		offset := int64(in.Limit * (in.Page - 1))
+		args = append(args, offset)
 	}
 
-	// Выполняем запрос
 	rows, err := d.db.Queryx(query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query installments: %w", err)
@@ -159,11 +171,9 @@ func (d *installmentRepo) GetListDebts(in *pb.FilterDebts) (*pb.DebtsList, error
 	defer rows.Close()
 
 	var totalCount int64
-
-	// Обрабатываем результаты
 	for rows.Next() {
 		var debt pb.Debts
-		var lastPaymentDate sql.NullString
+		var lastPaymentDate sql.NullTime
 
 		if err := rows.Scan(
 			&debt.Id,
@@ -180,9 +190,9 @@ func (d *installmentRepo) GetListDebts(in *pb.FilterDebts) (*pb.DebtsList, error
 			return nil, fmt.Errorf("failed to scan installment: %w", err)
 		}
 
-		// Обрабатываем nullable поля
 		if lastPaymentDate.Valid {
-			debt.LastPaymentDate = lastPaymentDate.String
+			// Например, формат "YYYY-MM-DD" (можно изменить по необходимости)
+			debt.LastPaymentDate = lastPaymentDate.Time.Format("2006-01-02")
 		} else {
 			debt.LastPaymentDate = ""
 		}
@@ -190,7 +200,10 @@ func (d *installmentRepo) GetListDebts(in *pb.FilterDebts) (*pb.DebtsList, error
 		debts = append(debts, &debt)
 	}
 
-	// Возвращаем результат
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows iteration error: %w", err)
+	}
+
 	return &pb.DebtsList{
 		Installments: debts,
 		TotalCount:   totalCount,
@@ -297,4 +310,79 @@ func (d *installmentRepo) PayPayment(in *pb.PayDebtsReq) (*pb.Debts, error) {
 	}
 
 	return &debt, nil
+}
+
+func (d *installmentRepo) GetTotalDebtSum(in *pb.CompanyID) (*pb.SumMoney, error) {
+
+	query := `
+		SELECT currency_code, SUM(GREATEST(total_amount - amount_paid, 0)) AS debt
+		FROM installment
+		WHERE company_id = $1
+		GROUP BY currency_code
+	`
+	rows, err := d.db.QueryContext(context.Background(), query, in.Id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query for company debt: %w", err)
+	}
+	defer rows.Close()
+
+	// Формируем ответный объект SumMoney.
+	result := &pb.SumMoney{
+		CompanyId: in.Id,
+		Sum:       make([]*pb.Money, 0),
+	}
+
+	for rows.Next() {
+		var currency string
+		var debt float64 // DECIMAL(10,2) можно сканировать в float64
+		if err := rows.Scan(&currency, &debt); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
+		}
+		result.Sum = append(result.Sum, &pb.Money{
+			Currency: currency,
+			Sum:      debt,
+		})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %w", err)
+	}
+	return result, nil
+}
+
+// GetUserTotalDebtSum рассчитывает сумму оставшихся долгов для конкретного клиента,
+// также группируя задолженности по валюте.
+func (d *installmentRepo) GetUserTotalDebtSum(in *pb.ClientID) (*pb.SumMoney, error) {
+	// SQL-запрос: аналогичный запрос, но фильтруем по client_id.
+	query := `
+		SELECT currency_code, SUM(GREATEST(total_amount - amount_paid, 0)) AS debt
+		FROM installment
+		WHERE client_id = $1
+		GROUP BY currency_code
+	`
+	rows, err := d.db.QueryContext(context.Background(), query, in.Id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query for client debt: %w", err)
+	}
+	defer rows.Close()
+
+	// Для ответа используем SumMoney; поле CompanyId можно оставить пустым.
+	result := &pb.SumMoney{
+		Sum: make([]*pb.Money, 0),
+	}
+
+	for rows.Next() {
+		var currency string
+		var debt float64
+		if err := rows.Scan(&currency, &debt); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
+		}
+		result.Sum = append(result.Sum, &pb.Money{
+			Currency: currency,
+			Sum:      debt,
+		})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %w", err)
+	}
+	return result, nil
 }

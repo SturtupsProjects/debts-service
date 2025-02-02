@@ -116,3 +116,28 @@ func (s *DebtsServiceServer) GetPayments(ctx context.Context, in *pb.FilterPayme
 	s.log.Info("Payments list retrieved successfully", "count", len(payments.Payments))
 	return payments, nil
 }
+
+func (s *DebtsServiceServer) GetTotalDebtSum(ctx context.Context, in *pb.CompanyID) (*pb.SumMoney, error) {
+	s.log.Info("GetTotalDebtSum", "req", in)
+
+	res, err := s.repo.GetTotalDebtSum(in)
+	if err != nil {
+		s.log.Error("Failed to retrieve total debt sum", "error", err)
+		return nil, fmt.Errorf("could not retrieve total debt sum: %w", err)
+	}
+
+	return res, nil
+}
+
+func (s *DebtsServiceServer) GetUserTotalDebtSum(ctx context.Context, in *pb.ClientID) (*pb.SumMoney, error) {
+
+	s.log.Info("GetUserTotalDebtSum", "req", in)
+
+	res, err := s.repo.GetUserTotalDebtSum(in)
+	if err != nil {
+		s.log.Error("Failed to retrieve user total debt sum", "error", err)
+		return nil, fmt.Errorf("could not retrieve user total debt sum: %w", err)
+	}
+
+	return res, nil
+}
