@@ -28,4 +28,5 @@ type PaymentsRepo interface {
 	GetPayment(in *pb.PaymentID) (*pb.Payment, error)
 	GetPaymentsByDebtId(in *pb.DebtsID) (*pb.PaymentList, error)
 	GetPayments(in *pb.FilterPayment) (*pb.PaymentList, error)
+	GetUserPayments(in *pb.ClientID) (*pb.UserPaymentsRes, error)
 }

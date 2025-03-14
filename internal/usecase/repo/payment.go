@@ -144,3 +144,34 @@ func (p *paymentRepo) GetPaymentsByDebtId(in *pb.DebtsID) (*pb.PaymentList, erro
 
 	return &pb.PaymentList{Payments: payments}, nil
 }
+
+func (p *paymentRepo) GetUserPayments(in *pb.ClientID) (*pb.UserPaymentsRes, error) {
+	const query = `
+        SELECT p.installment_id, p.id, p.payment_date, p.payment_amount 
+        FROM payments p
+        JOIN installment i ON i.id = p.installment_id 
+        WHERE i.client_id = $1
+    `
+
+	rows, err := p.db.Query(query, in.Id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query payments: %w", err)
+	}
+	defer rows.Close()
+
+	var payments []*pb.Payments
+
+	for rows.Next() {
+		var payment pb.Payments
+		if err := rows.Scan(&payment.DebtId, &payment.PaymentId, &payment.PaymentDate, &payment.PaymentAmount); err != nil {
+			return nil, fmt.Errorf("failed to scan payment: %w", err)
+		}
+		payments = append(payments, &payment)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over rows: %w", err)
+	}
+
+	return &pb.UserPaymentsRes{Payments: payments}, nil
+}

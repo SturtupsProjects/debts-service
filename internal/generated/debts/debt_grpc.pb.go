@@ -33,6 +33,7 @@ const (
 	DebtsService_GetPayment_FullMethodName           = "/debts.DebtsService/GetPayment"
 	DebtsService_GetPaymentsByDebtsId_FullMethodName = "/debts.DebtsService/GetPaymentsByDebtsId"
 	DebtsService_GetPayments_FullMethodName          = "/debts.DebtsService/GetPayments"
+	DebtsService_GetUserPayments_FullMethodName      = "/debts.DebtsService/GetUserPayments"
 )
 
 // DebtsServiceClient is the client API for DebtsService service.
@@ -55,6 +56,7 @@ type DebtsServiceClient interface {
 	GetPayment(ctx context.Context, in *PaymentID, opts ...grpc.CallOption) (*Payment, error)
 	GetPaymentsByDebtsId(ctx context.Context, in *DebtsID, opts ...grpc.CallOption) (*PaymentList, error)
 	GetPayments(ctx context.Context, in *FilterPayment, opts ...grpc.CallOption) (*PaymentList, error)
+	GetUserPayments(ctx context.Context, in *ClientID, opts ...grpc.CallOption) (*UserPaymentsRes, error)
 }
 
 type debtsServiceClient struct {
@@ -205,6 +207,16 @@ func (c *debtsServiceClient) GetPayments(ctx context.Context, in *FilterPayment,
 	return out, nil
 }
 
+func (c *debtsServiceClient) GetUserPayments(ctx context.Context, in *ClientID, opts ...grpc.CallOption) (*UserPaymentsRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UserPaymentsRes)
+	err := c.cc.Invoke(ctx, DebtsService_GetUserPayments_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DebtsServiceServer is the server API for DebtsService service.
 // All implementations must embed UnimplementedDebtsServiceServer
 // for forward compatibility
@@ -225,6 +237,7 @@ type DebtsServiceServer interface {
 	GetPayment(context.Context, *PaymentID) (*Payment, error)
 	GetPaymentsByDebtsId(context.Context, *DebtsID) (*PaymentList, error)
 	GetPayments(context.Context, *FilterPayment) (*PaymentList, error)
+	GetUserPayments(context.Context, *ClientID) (*UserPaymentsRes, error)
 	mustEmbedUnimplementedDebtsServiceServer()
 }
 
@@ -273,6 +286,9 @@ func (UnimplementedDebtsServiceServer) GetPaymentsByDebtsId(context.Context, *De
 }
 func (UnimplementedDebtsServiceServer) GetPayments(context.Context, *FilterPayment) (*PaymentList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPayments not implemented")
+}
+func (UnimplementedDebtsServiceServer) GetUserPayments(context.Context, *ClientID) (*UserPaymentsRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserPayments not implemented")
 }
 func (UnimplementedDebtsServiceServer) mustEmbedUnimplementedDebtsServiceServer() {}
 
@@ -539,6 +555,24 @@ func _DebtsService_GetPayments_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DebtsService_GetUserPayments_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClientID)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DebtsServiceServer).GetUserPayments(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DebtsService_GetUserPayments_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DebtsServiceServer).GetUserPayments(ctx, req.(*ClientID))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DebtsService_ServiceDesc is the grpc.ServiceDesc for DebtsService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -601,6 +635,10 @@ var DebtsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPayments",
 			Handler:    _DebtsService_GetPayments_Handler,
+		},
+		{
+			MethodName: "GetUserPayments",
+			Handler:    _DebtsService_GetUserPayments_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -16,6 +16,7 @@ CREATE TABLE installment
 (
     id                UUID PRIMARY KEY,
     client_id         UUID           NOT NULL,
+    sale_id           UUID,
     total_amount      DECIMAL(10, 2) NOT NULL CHECK (total_amount >= 0),
     amount_paid       DECIMAL(10, 2) DEFAULT 0 CHECK (amount_paid >= 0),
     last_payment_date DATE,

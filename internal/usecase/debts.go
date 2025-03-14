@@ -141,3 +141,17 @@ func (s *DebtsServiceServer) GetUserTotalDebtSum(ctx context.Context, in *pb.Cli
 
 	return res, nil
 }
+
+func (s *DebtsServiceServer) GetUserPayments(ctx context.Context, in *pb.ClientID) (*pb.UserPaymentsRes, error) {
+
+	s.log.Info("GetUserPayments", "req", in)
+
+	res, err := s.repo1.GetUserPayments(in)
+
+	if err != nil {
+		s.log.Error("Failed to retrieve user payments", "error", err)
+		return nil, fmt.Errorf("could not retrieve user payments: %w", err)
+	}
+
+	return res, nil
+}
