@@ -150,10 +150,10 @@ func (p *paymentRepo) GetUserPayments(in *pb.ClientID) (*pb.UserPaymentsRes, err
         SELECT p.installment_id, p.id, p.payment_date, p.payment_amount 
         FROM payments p
         JOIN installment i ON i.id = p.installment_id 
-        WHERE i.client_id = $1
+        WHERE i.client_id = $1 AND i.company_id = $2
     `
 
-	rows, err := p.db.Query(query, in.Id)
+	rows, err := p.db.Query(query, in.Id, in.CompanyId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query payments: %w", err)
 	}
