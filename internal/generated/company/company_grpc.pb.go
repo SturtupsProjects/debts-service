@@ -36,6 +36,7 @@ const (
 	CompanyService_UpdateCompanyBalance_FullMethodName = "/company.CompanyService/UpdateCompanyBalance"
 	CompanyService_GetUsersBalanceList_FullMethodName  = "/company.CompanyService/GetUsersBalanceList"
 	CompanyService_DeleteCompanyBalance_FullMethodName = "/company.CompanyService/DeleteCompanyBalance"
+	CompanyService_SendSMS_FullMethodName              = "/company.CompanyService/SendSMS"
 )
 
 // CompanyServiceClient is the client API for CompanyService service.
@@ -60,6 +61,7 @@ type CompanyServiceClient interface {
 	UpdateCompanyBalance(ctx context.Context, in *CompanyBalanceRequest, opts ...grpc.CallOption) (*CompanyBalanceResponse, error)
 	GetUsersBalanceList(ctx context.Context, in *FilterCompanyBalanceRequest, opts ...grpc.CallOption) (*CompanyBalanceListResponse, error)
 	DeleteCompanyBalance(ctx context.Context, in *Id, opts ...grpc.CallOption) (*Message, error)
+	SendSMS(ctx context.Context, in *SmsRequest, opts ...grpc.CallOption) (*Message, error)
 }
 
 type companyServiceClient struct {
@@ -240,6 +242,16 @@ func (c *companyServiceClient) DeleteCompanyBalance(ctx context.Context, in *Id,
 	return out, nil
 }
 
+func (c *companyServiceClient) SendSMS(ctx context.Context, in *SmsRequest, opts ...grpc.CallOption) (*Message, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Message)
+	err := c.cc.Invoke(ctx, CompanyService_SendSMS_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CompanyServiceServer is the server API for CompanyService service.
 // All implementations must embed UnimplementedCompanyServiceServer
 // for forward compatibility
@@ -262,6 +274,7 @@ type CompanyServiceServer interface {
 	UpdateCompanyBalance(context.Context, *CompanyBalanceRequest) (*CompanyBalanceResponse, error)
 	GetUsersBalanceList(context.Context, *FilterCompanyBalanceRequest) (*CompanyBalanceListResponse, error)
 	DeleteCompanyBalance(context.Context, *Id) (*Message, error)
+	SendSMS(context.Context, *SmsRequest) (*Message, error)
 	mustEmbedUnimplementedCompanyServiceServer()
 }
 
@@ -319,6 +332,9 @@ func (UnimplementedCompanyServiceServer) GetUsersBalanceList(context.Context, *F
 }
 func (UnimplementedCompanyServiceServer) DeleteCompanyBalance(context.Context, *Id) (*Message, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteCompanyBalance not implemented")
+}
+func (UnimplementedCompanyServiceServer) SendSMS(context.Context, *SmsRequest) (*Message, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendSMS not implemented")
 }
 func (UnimplementedCompanyServiceServer) mustEmbedUnimplementedCompanyServiceServer() {}
 
@@ -639,6 +655,24 @@ func _CompanyService_DeleteCompanyBalance_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CompanyService_SendSMS_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SmsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CompanyServiceServer).SendSMS(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CompanyService_SendSMS_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CompanyServiceServer).SendSMS(ctx, req.(*SmsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CompanyService_ServiceDesc is the grpc.ServiceDesc for CompanyService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -713,6 +747,10 @@ var CompanyService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteCompanyBalance",
 			Handler:    _CompanyService_DeleteCompanyBalance_Handler,
+		},
+		{
+			MethodName: "SendSMS",
+			Handler:    _CompanyService_SendSMS_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

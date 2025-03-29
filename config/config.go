@@ -18,6 +18,8 @@ type Config struct {
 	EXPIRED_ACCESS  string
 	EXPIRED_REFRESH string
 
+	USER_SERVICE_PORT string
+
 	RUN_PORT string
 }
 
@@ -35,6 +37,7 @@ func NewConfig() Config {
 	config.DB_PORT = os.Getenv("DB_PORT")
 
 	config.RUN_PORT = os.Getenv("RUN_PORT")
+	config.USER_SERVICE_PORT = os.Getenv("USER_SERVICE_PORT")
 
 	config.ACCESS_TOKEN = os.Getenv("ACCESS_TOKEN")
 	config.REFRESH_TOKEN = os.Getenv("REFRESH_TOKEN")

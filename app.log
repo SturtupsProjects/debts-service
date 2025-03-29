@@ -53,3 +53,20 @@
 {"time":"2025-02-02T21:48:11.034620058+05:00","level":"INFO","msg":"GetClientDebts called","client_id":"cdb8a9c6-00d2-444e-9ab5-e4cb66a8c6d4"}
 {"time":"2025-02-02T21:48:18.179170745+05:00","level":"INFO","msg":"GetClientDebts called","client_id":"cdb8a9c6-00d2-444e-9ab5-e4cb66a8c6d4"}
 {"time":"2025-02-02T21:48:30.142973294+05:00","level":"INFO","msg":"GetClientDebts called","client_id":"cdb8a9c6-00d2-444e-9ab5-e4cb66a8c6d4"}
+{"time":"2025-03-29T17:42:51.073696358+05:00","level":"INFO","msg":"GetDebtsForExel","req":{"currency":"usd","company_id":"5e47d37c-9a46-4d8a-8a09-7bb92eef7e07"}}
+{"time":"2025-03-29T17:42:51.430866073+05:00","level":"ERROR","msg":"Error getting debts for exel","error":"query execution failed: sql: Scan error on column index 1, name \"debts\": unsupported Scan, storing driver.Value type []uint8 into type *[]*entity.UserDebts"}
+{"time":"2025-03-29T17:48:39.109703067+05:00","level":"INFO","msg":"GetDebtsForExel","req":{"currency":"usd","company_id":"5e47d37c-9a46-4d8a-8a09-7bb92eef7e07"}}
+{"time":"2025-03-29T17:48:39.975655779+05:00","level":"ERROR","msg":"Error getting user data","error":"rpc error: code = Unavailable desc = dns: A record lookup error: lookup crm-admin_auth on 127.0.0.53:53: server misbehaving"}
+{"time":"2025-03-29T17:50:13.663958866+05:00","level":"INFO","msg":"GetDebtsForExel","req":{"currency":"usd","company_id":"5e47d37c-9a46-4d8a-8a09-7bb92eef7e07"}}
+{"time":"2025-03-29T17:51:38.93468731+05:00","level":"INFO","msg":"GetDebtsForExel","req":{"currency":"usd","company_id":"5e47d37c-9a46-4d8a-8a09-7bb92eef7e07"}}
+{"time":"2025-03-29T17:55:06.319209828+05:00","level":"INFO","msg":"GetDebtsForExel","req":{"currency":"usd","company_id":"5e47d37c-9a46-4d8a-8a09-7bb92eef7e07"}}
+{"time":"2025-03-29T17:57:45.851464688+05:00","level":"INFO","msg":"GetDebtsForExel","req":{"currency":"usd","company_id":"5e47d37c-9a46-4d8a-8a09-7bb92eef7e07"}}
+{"time":"2025-03-29T18:02:21.643725949+05:00","level":"INFO","msg":"GetDebtsForExel","req":{"currency":"usd","company_id":"5e47d37c-9a46-4d8a-8a09-7bb92eef7e07"}}
+{"time":"2025-03-29T18:07:07.687736378+05:00","level":"INFO","msg":"GetDebtsForExel","req":{"currency":"usd","company_id":"5e47d37c-9a46-4d8a-8a09-7bb92eef7e07"}}
+{"time":"2025-03-29T18:07:11.689630711+05:00","level":"ERROR","msg":"Error getting debts for exel","error":"query execution failed: read tcp 172.20.10.2:40874->38.242.212.205:5439: read: connection reset by peer"}
+{"time":"2025-03-29T18:07:16.535642418+05:00","level":"INFO","msg":"GetDebtsForExel","req":{"currency":"usd","company_id":"5e47d37c-9a46-4d8a-8a09-7bb92eef7e07"}}
+{"time":"2025-03-29T18:17:31.2057867+05:00","level":"INFO","msg":"GetDebtsForExel","req":{"currency":"usd","company_id":"5e47d37c-9a46-4d8a-8a09-7bb92eef7e07"}}
+{"time":"2025-03-29T18:18:14.34862928+05:00","level":"INFO","msg":"GetDebtsForExel","req":{"currency":"usd","company_id":"5e47d37c-9a46-4d8a-8a09-7bb92eef7e07"}}
+{"time":"2025-03-29T18:21:53.274648047+05:00","level":"INFO","msg":"GetDebtsForExel","req":{"currency":"usd","company_id":"5e47d37c-9a46-4d8a-8a09-7bb92eef7e07"}}
+{"time":"2025-03-29T18:24:34.708814015+05:00","level":"INFO","msg":"GetDebtsForExel","req":{"currency":"usd","company_id":"5e47d37c-9a46-4d8a-8a09-7bb92eef7e07"}}
+{"time":"2025-03-29T18:25:47.471827205+05:00","level":"INFO","msg":"GetDebtsForExel","req":{"currency":"usd","company_id":"5e47d37c-9a46-4d8a-8a09-7bb92eef7e07"}}

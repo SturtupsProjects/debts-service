@@ -3,6 +3,8 @@ package repo
 import (
 	"context"
 	"database/sql"
+	"debts-service/internal/usecase/entity"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -385,4 +387,51 @@ func (d *installmentRepo) GetUserTotalDebtSum(in *pb.ClientID) (*pb.SumMoney, er
 		return nil, fmt.Errorf("error iterating rows: %w", err)
 	}
 	return result, nil
+}
+
+func (d *installmentRepo) GetDebtsForExel(in *pb.FilterExelDebt) (*entity.ListDebtsExelDb, error) {
+	query := `
+		SELECT 
+			client_id,
+			COALESCE(
+				json_agg(
+					json_build_object(
+						'total_amount', total_amount,
+						'amount_paid', amount_paid,
+						'debt_balance', total_amount - amount_paid,
+						'last_paid_date', COALESCE(last_payment_date::text, ''),
+						'currency_code', currency_code
+					)
+				), '[]'
+			) AS debts
+		FROM installment
+		WHERE company_id = $1 and is_fully_paid = false
+		GROUP BY client_id
+	`
+
+	var tmpResults []struct {
+		ClientID string `db:"client_id"`
+		Debts    []byte `db:"debts"`
+	}
+	if err := d.db.Select(&tmpResults, query, in.CompanyId); err != nil {
+		return nil, fmt.Errorf("query execution failed: %w", err)
+	}
+
+	listDebts := &entity.ListDebtsExelDb{
+		Debts: make([]*entity.DebtsExelDbRes, len(tmpResults)),
+	}
+
+	for i, row := range tmpResults {
+		var userDebts []*entity.UserDebts
+		if err := json.Unmarshal(row.Debts, &userDebts); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal debts JSON: %w", err)
+		}
+
+		listDebts.Debts[i] = &entity.DebtsExelDbRes{
+			ClientID: row.ClientID,
+			Debts:    userDebts,
+		}
+	}
+
+	return listDebts, nil
 }

@@ -2,6 +2,7 @@ package usecase
 
 import (
 	pb "debts-service/internal/generated/debts"
+	"debts-service/internal/usecase/entity"
 )
 
 type ClientsRepo interface {
@@ -22,6 +23,8 @@ type DebtsRepo interface {
 
 	GetTotalDebtSum(in *pb.CompanyID) (*pb.SumMoney, error)
 	GetUserTotalDebtSum(in *pb.ClientID) (*pb.SumMoney, error)
+
+	GetDebtsForExel(in *pb.FilterExelDebt) (*entity.ListDebtsExelDb, error)
 }
 
 type PaymentsRepo interface {
