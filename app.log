@@ -70,3 +70,52 @@
 {"time":"2025-03-29T18:21:53.274648047+05:00","level":"INFO","msg":"GetDebtsForExel","req":{"currency":"usd","company_id":"5e47d37c-9a46-4d8a-8a09-7bb92eef7e07"}}
 {"time":"2025-03-29T18:24:34.708814015+05:00","level":"INFO","msg":"GetDebtsForExel","req":{"currency":"usd","company_id":"5e47d37c-9a46-4d8a-8a09-7bb92eef7e07"}}
 {"time":"2025-03-29T18:25:47.471827205+05:00","level":"INFO","msg":"GetDebtsForExel","req":{"currency":"usd","company_id":"5e47d37c-9a46-4d8a-8a09-7bb92eef7e07"}}
+{"time":"2025-04-03T22:09:30.933019515+05:00","level":"INFO","msg":"GetClientDebts called","client_id":"76158036-abe3-4635-8087-0eb2bbc864fd"}
+{"time":"2025-04-03T22:09:31.082359334+05:00","level":"ERROR","msg":"Failed to retrieve client debts","client_id":"76158036-abe3-4635-8087-0eb2bbc864fd","error":"failed to query installments: pq: column \"sale_id\" does not exist"}
+{"time":"2025-04-03T22:11:20.539279935+05:00","level":"INFO","msg":"GetClientDebts called","client_id":"76158036-abe3-4635-8087-0eb2bbc864fd"}
+{"time":"2025-04-03T22:11:20.837461653+05:00","level":"ERROR","msg":"Failed to retrieve client debts","client_id":"76158036-abe3-4635-8087-0eb2bbc864fd","error":"failed to scan installment: sql: Scan error on column index 2, name \"sale_id\": converting NULL to string is unsupported"}
+{"time":"2025-04-03T22:14:03.407474278+05:00","level":"INFO","msg":"GetClientDebts called","client_id":"76158036-abe3-4635-8087-0eb2bbc864fd"}
+{"time":"2025-04-03T22:14:17.348392746+05:00","level":"INFO","msg":"GetClientDebts called","client_id":"76158036-abe3-4635-8087-0eb2bbc864fd"}
+{"time":"2025-04-03T22:18:25.842795869+05:00","level":"INFO","msg":"CreateDebt called","client_id":"417efc25-0e12-4cd8-a308-854d27bfaa25"}
+{"time":"2025-04-03T22:18:26.137584018+05:00","level":"ERROR","msg":"Failed to create debt","error":"failed to create installment: pq: invalid input syntax for type uuid: \"\""}
+{"time":"2025-04-03T22:24:53.492676421+05:00","level":"INFO","msg":"CreateDebt called","client_id":"417efc25-0e12-4cd8-a308-854d27bfaa25"}
+{"time":"2025-04-03T22:24:53.763971553+05:00","level":"ERROR","msg":"Failed to create debt","error":"failed to create installment: pq: date/time field value out of range: \"14-04-2025\""}
+{"time":"2025-04-03T22:30:43.505935984+05:00","level":"INFO","msg":"CreateDebt called","client_id":"417efc25-0e12-4cd8-a308-854d27bfaa25"}
+{"time":"2025-04-03T22:33:32.932646177+05:00","level":"ERROR","msg":"Failed to pay debt","debt_id":"417efc25-0e12-4cd8-a308-854d27bfaa25","error":"failed to get client installments: pq: invalid input syntax for type uuid: \"\""}
+{"time":"2025-04-03T22:35:21.959790164+05:00","level":"ERROR","msg":"Failed to pay debt","debt_id":"417efc25-0e12-4cd8-a308-854d27bfaa25","error":"failed to scan installment: sql: Scan error on column index 2, name \"sale_id\": converting NULL to string is unsupported"}
+{"time":"2025-04-03T22:40:49.062005549+05:00","level":"INFO","msg":"GetListDebts called","filters":{"debt_id":"7b73b9a3-6d5d-43be-9285-ac1f1567f8e4","pay_type":"in","paid_amount":5000,"company_id":"76158036-abe3-4635-8087-0eb2bbc864fd"}}
+{"time":"2025-04-03T22:40:49.481126663+05:00","level":"ERROR","msg":"Failed to retrieve debts list","error":"failed to insert payment: pq: column \"pay_type\" of relation \"payments\" does not exist"}
+{"time":"2025-04-03T22:44:16.7701218+05:00","level":"INFO","msg":"GetListDebts called","filters":{"debt_id":"7b73b9a3-6d5d-43be-9285-ac1f1567f8e4","pay_type":"in","paid_amount":5000,"company_id":"76158036-abe3-4635-8087-0eb2bbc864fd"}}
+{"time":"2025-04-03T22:44:17.626634336+05:00","level":"ERROR","msg":"Failed to retrieve debts list","error":"failed to update installment: sql: Scan error on column index 2, name \"sale_id\": converting NULL to string is unsupported"}
+{"time":"2025-04-03T22:46:46.143653915+05:00","level":"INFO","msg":"GetListDebts called","filters":{"debt_id":"7b73b9a3-6d5d-43be-9285-ac1f1567f8e4","pay_type":"in","paid_amount":5000,"company_id":"76158036-abe3-4635-8087-0eb2bbc864fd"}}
+{"time":"2025-04-03T22:47:12.275734197+05:00","level":"INFO","msg":"GetPayment called","payment_id":"7b73b9a3-6d5d-43be-9285-ac1f1567f8e4"}
+{"time":"2025-04-03T22:47:12.566750087+05:00","level":"ERROR","msg":"Failed to retrieve payment","payment_id":"7b73b9a3-6d5d-43be-9285-ac1f1567f8e4","error":"payment not found: sql: no rows in result set"}
+{"time":"2025-04-03T22:47:34.384975559+05:00","level":"INFO","msg":"GetPaymentsByDebtId called","debt_id":"7b73b9a3-6d5d-43be-9285-ac1f1567f8e4"}
+{"time":"2025-04-03T22:47:34.663354703+05:00","level":"INFO","msg":"Payments retrieved by debt ID successfully","debt_id":"7b73b9a3-6d5d-43be-9285-ac1f1567f8e4","count":1}
+{"time":"2025-04-03T22:47:43.694649858+05:00","level":"INFO","msg":"GetPayment called","payment_id":"ebaf2919-2c5d-4bd1-96d4-ff012cd783c3"}
+{"time":"2025-04-03T22:47:44.008221799+05:00","level":"INFO","msg":"Payment retrieved successfully","payment_id":"ebaf2919-2c5d-4bd1-96d4-ff012cd783c3"}
+{"time":"2025-04-03T22:48:19.632584263+05:00","level":"INFO","msg":"GetPaymentsByDebtId called","debt_id":"417efc25-0e12-4cd8-a308-854d27bfaa25"}
+{"time":"2025-04-03T22:48:19.933911338+05:00","level":"INFO","msg":"Payments retrieved by debt ID successfully","debt_id":"417efc25-0e12-4cd8-a308-854d27bfaa25","count":0}
+{"time":"2025-04-03T22:48:39.654599102+05:00","level":"INFO","msg":"GetPaymentsByDebtId called","debt_id":"417efc25-0e12-4cd8-a308-854d27bfaa25"}
+{"time":"2025-04-03T22:48:39.940717232+05:00","level":"INFO","msg":"Payments retrieved by debt ID successfully","debt_id":"417efc25-0e12-4cd8-a308-854d27bfaa25","count":0}
+{"time":"2025-04-03T22:52:55.53054596+05:00","level":"INFO","msg":"GetPaymentsByDebtId called","debt_id":"417efc25-0e12-4cd8-a308-854d27bfaa25"}
+{"time":"2025-04-03T22:52:55.843987209+05:00","level":"INFO","msg":"Payments retrieved by debt ID successfully","debt_id":"417efc25-0e12-4cd8-a308-854d27bfaa25","count":0}
+{"time":"2025-04-03T22:53:06.366821187+05:00","level":"INFO","msg":"GetPaymentsByDebtId called","debt_id":"417efc25-0e12-4cd8-a308-854d27bfaa25"}
+{"time":"2025-04-03T22:53:06.686191977+05:00","level":"INFO","msg":"Payments retrieved by debt ID successfully","debt_id":"417efc25-0e12-4cd8-a308-854d27bfaa25","count":0}
+{"time":"2025-04-03T22:57:15.532940089+05:00","level":"INFO","msg":"GetPaymentsByDebtId called","debt_id":"417efc25-0e12-4cd8-a308-854d27bfaa25"}
+{"time":"2025-04-03T22:57:15.841777283+05:00","level":"INFO","msg":"Payments retrieved by debt ID successfully","debt_id":"417efc25-0e12-4cd8-a308-854d27bfaa25","count":0}
+{"time":"2025-04-03T23:04:22.453369543+05:00","level":"INFO","msg":"GetPaymentsByDebtId called","debt_id":"417efc25-0e12-4cd8-a308-854d27bfaa25"}
+{"time":"2025-04-03T23:04:22.746998601+05:00","level":"INFO","msg":"Payments retrieved by debt ID successfully","debt_id":"417efc25-0e12-4cd8-a308-854d27bfaa25","count":0}
+{"time":"2025-04-03T23:05:01.681297705+05:00","level":"INFO","msg":"GetPaymentsByDebtId called","debt_id":"417efc25-0e12-4cd8-a308-854d27bfaa25"}
+{"time":"2025-04-03T23:05:01.986836906+05:00","level":"INFO","msg":"Payments retrieved by debt ID successfully","debt_id":"417efc25-0e12-4cd8-a308-854d27bfaa25","count":0}
+{"time":"2025-04-03T23:05:09.887018676+05:00","level":"INFO","msg":"GetPaymentsByDebtId called","debt_id":"417efc25-0e12-4cd8-a308-854d27bfaa25"}
+{"time":"2025-04-03T23:05:10.18801419+05:00","level":"INFO","msg":"Payments retrieved by debt ID successfully","debt_id":"417efc25-0e12-4cd8-a308-854d27bfaa25","count":0}
+{"time":"2025-04-03T23:05:29.44446504+05:00","level":"INFO","msg":"GetPaymentsByDebtId called","debt_id":"417efc25-0e12-4cd8-a308-854d27bfaa25"}
+{"time":"2025-04-03T23:05:29.747687036+05:00","level":"INFO","msg":"Payments retrieved by debt ID successfully","debt_id":"417efc25-0e12-4cd8-a308-854d27bfaa25","count":0}
+{"time":"2025-04-03T23:07:08.528778554+05:00","level":"INFO","msg":"GetPaymentsByDebtId called","debt_id":"417efc25-0e12-4cd8-a308-854d27bfaa25"}
+{"time":"2025-04-03T23:07:08.799626054+05:00","level":"INFO","msg":"Payments retrieved by debt ID successfully","debt_id":"417efc25-0e12-4cd8-a308-854d27bfaa25","count":0}
+{"time":"2025-04-03T23:07:56.9015452+05:00","level":"INFO","msg":"GetTotalDebtSum","req":{"id":"76158036-abe3-4635-8087-0eb2bbc864fd","debt_type":"debtor"}}
+{"time":"2025-04-03T23:07:57.067814019+05:00","level":"ERROR","msg":"Failed to retrieve total debt sum","error":"failed to execute query for company debt: pq: got 1 parameters but the statement requires 2"}
+{"time":"2025-04-03T23:09:43.973448743+05:00","level":"INFO","msg":"GetTotalDebtSum","req":{"id":"76158036-abe3-4635-8087-0eb2bbc864fd","debt_type":"debtor"}}
+{"time":"2025-04-03T23:10:14.737214715+05:00","level":"INFO","msg":"GetUserTotalDebtSum","req":{"company_id":"76158036-abe3-4635-8087-0eb2bbc864fd","id":"417efc25-0e12-4cd8-a308-854d27bfaa25","debt_type":"debtor"}}
+{"time":"2025-04-03T23:11:21.366956294+05:00","level":"INFO","msg":"GetDebt called","debt_id":"7b73b9a3-6d5d-43be-9285-ac1f1567f8e4"}

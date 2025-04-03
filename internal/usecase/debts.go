@@ -97,7 +97,7 @@ func (s *DebtsServiceServer) GetPayment(ctx context.Context, in *pb.PaymentID) (
 	return payment, nil
 }
 
-func (s *DebtsServiceServer) GetPaymentsByDebtsId(ctx context.Context, in *pb.DebtsID) (*pb.PaymentList, error) {
+func (s *DebtsServiceServer) GetPaymentsByDebtsId(ctx context.Context, in *pb.PayDebtsID) (*pb.PaymentList, error) {
 	s.log.Info("GetPaymentsByDebtId called", "debt_id", in.Id)
 
 	payments, err := s.repo1.GetPaymentsByDebtId(in)

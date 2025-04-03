@@ -6,7 +6,9 @@ import (
 	"debts-service/internal/usecase/entity"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
 
 	pb "debts-service/internal/generated/debts"
 	"debts-service/internal/usecase"
@@ -23,56 +25,105 @@ func NewInstallmentRepo(db *sqlx.DB) usecase.DebtsRepo {
 	return &installmentRepo{db: db}
 }
 
-// CreateDebt creates a new installment record
 func (d *installmentRepo) CreateDebt(in *pb.DebtsRequest) (*pb.Debts, error) {
 	var debt pb.Debts
-	var lastPaymentDate sql.NullString
-	query := `
-		INSERT INTO installment (id, client_id, total_amount, amount_paid, currency_code, company_id)
-		VALUES (gen_random_uuid(), $1, $2, 0, $3, $4)
-		RETURNING id, client_id, total_amount, amount_paid, last_payment_date, is_fully_paid, created_at, currency_code, company_id`
+	var lastPaymentDate, saleID, shouldPayAt sql.NullString
 
-	err := d.db.QueryRowx(query, in.ClientId, in.TotalAmount, in.CurrencyCode, in.CompanyId).Scan(
+	var saleIDParam interface{}
+	if in.SaleId == "" {
+		saleIDParam = nil
+	} else {
+		saleIDParam = in.SaleId
+	}
+
+	var shouldPayAtParam interface{}
+	if in.ShouldPayAt == "" {
+		shouldPayAtParam = nil
+	} else {
+		parsedDate, err := time.Parse("02-01-2006", in.ShouldPayAt)
+		if err != nil {
+			return nil, fmt.Errorf("invalid date format for should_pay_at, expected dd-mm-yyyy: %w", err)
+		}
+		shouldPayAtParam = parsedDate.Format("2006-01-02")
+	}
+
+	query := `
+		INSERT INTO installment (id, client_id, sale_id, total_amount, amount_paid,
+		                         currency_code, should_pay_at, debt_type, company_id)
+		VALUES (gen_random_uuid(), $1, $2, $3, 0, $4, $5, $6, $7)
+		RETURNING id, client_id, sale_id, total_amount, amount_paid, last_payment_date, is_fully_paid,
+		          currency_code, should_pay_at, debt_type, created_at, company_id`
+
+	err := d.db.QueryRowx(query,
+		in.ClientId,
+		saleIDParam,
+		in.TotalAmount,
+		in.CurrencyCode,
+		shouldPayAtParam,
+		in.DebtType,
+		in.CompanyId,
+	).Scan(
 		&debt.Id,
 		&debt.ClientId,
+		&saleID,
 		&debt.TotalAmount,
 		&debt.AmountPaid,
 		&lastPaymentDate,
 		&debt.IsFullyPaid,
-		&debt.CreatedAt,
 		&debt.CurrencyCode,
+		&shouldPayAt,
+		&debt.DebtType,
+		&debt.CreatedAt,
 		&debt.CompanyId,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create installment: %w", err)
 	}
+
 	if lastPaymentDate.Valid {
 		debt.LastPaymentDate = lastPaymentDate.String
 	} else {
 		debt.LastPaymentDate = ""
 	}
+
+	if saleID.Valid {
+		debt.SaleId = saleID.String
+	} else {
+		debt.SaleId = ""
+	}
+
+	if shouldPayAt.Valid {
+		debt.ShouldPayAt = shouldPayAt.String
+	} else {
+		debt.ShouldPayAt = ""
+	}
+
 	return &debt, nil
 }
 
 // GetDebt retrieves an installment by ID
 func (d *installmentRepo) GetDebt(in *pb.DebtsID) (*pb.Debts, error) {
 	var debt pb.Debts
-	var lastPaymentDate sql.NullString
+	var lastPaymentDate, saleID, shouldPayAt sql.NullString
 
 	query := `
-        SELECT id, client_id, total_amount, amount_paid, last_payment_date, is_fully_paid, created_at, currency_code, company_id
+        SELECT id, client_id, sale_id, total_amount, amount_paid, last_payment_date, is_fully_paid,
+		    currency_code, should_pay_at, debt_type, created_at, company_id
         FROM installment
         WHERE id = $1 AND company_id = $2`
 
 	err := d.db.QueryRowx(query, in.Id, in.CompanyId).Scan(
 		&debt.Id,
 		&debt.ClientId,
+		&saleID,
 		&debt.TotalAmount,
 		&debt.AmountPaid,
 		&lastPaymentDate,
 		&debt.IsFullyPaid,
-		&debt.CreatedAt,
 		&debt.CurrencyCode,
+		&shouldPayAt,
+		&debt.DebtType,
+		&debt.CreatedAt,
 		&debt.CompanyId,
 	)
 	if err != nil {
@@ -81,16 +132,32 @@ func (d *installmentRepo) GetDebt(in *pb.DebtsID) (*pb.Debts, error) {
 		}
 		return nil, fmt.Errorf("failed to get installment: %w", err)
 	}
+
 	if lastPaymentDate.Valid {
 		debt.LastPaymentDate = lastPaymentDate.String
 	} else {
 		debt.LastPaymentDate = ""
 	}
 
+	if saleID.Valid {
+		debt.SaleId = saleID.String
+	} else {
+		debt.SaleId = ""
+	}
+
+	if shouldPayAt.Valid {
+		debt.ShouldPayAt = shouldPayAt.String
+	} else {
+		debt.ShouldPayAt = ""
+	}
+
+	debt.BalanceOfDebt = debt.TotalAmount - debt.AmountPaid
+
 	return &debt, nil
 }
 
 func (d *installmentRepo) GetListDebts(in *pb.FilterDebts) (*pb.DebtsList, error) {
+
 	if in.CompanyId == "" {
 		return nil, fmt.Errorf("company_id is required")
 	}
@@ -99,53 +166,48 @@ func (d *installmentRepo) GetListDebts(in *pb.FilterDebts) (*pb.DebtsList, error
 		debts   []*pb.Debts
 		args    []interface{}
 		filters []string
-		argIdx  = 2 // $1 уже используется для company_id
+		argIdx  = 3
 	)
 
 	query := `
         SELECT 
             id, 
             client_id, 
+            sale_id,
             total_amount, 
             amount_paid, 
             last_payment_date, 
             is_fully_paid, 
             created_at, 
             currency_code, 
+            debt_type,
+            should_pay_at,
             company_id,
             COUNT(*) OVER() AS total_count
         FROM installment 
-        WHERE company_id = $1
+        WHERE company_id = $1 and debt_type = $2
     `
-	args = append(args, in.CompanyId)
+	args = append(args, in.CompanyId, in.DebtType)
 
 	if in.IsFullyPay != "" {
+		boolVal, err := strconv.ParseBool(in.IsFullyPay)
+		if err != nil {
+			return nil, fmt.Errorf("invalid is_fully_pay value: %w", err)
+		}
 		filters = append(filters, fmt.Sprintf("is_fully_paid = $%d", argIdx))
-		args = append(args, in.IsFullyPay)
+		args = append(args, boolVal)
 		argIdx++
 	}
 
-	if in.TotalAmountMin > 0 {
-		filters = append(filters, fmt.Sprintf("total_amount >= $%d", argIdx))
-		args = append(args, in.TotalAmountMin)
-		argIdx++
-	}
-	if in.TotalAmountMax > 0 {
-		filters = append(filters, fmt.Sprintf("total_amount <= $%d", argIdx))
-		args = append(args, in.TotalAmountMax)
-		argIdx++
-	}
-
-	// Фильтр по валюте
 	if in.CurrencyCode != "" {
 		filters = append(filters, fmt.Sprintf("currency_code = $%d", argIdx))
 		args = append(args, in.CurrencyCode)
 		argIdx++
 	}
 
-	if in.Description != "" {
-		filters = append(filters, fmt.Sprintf("description ILIKE $%d", argIdx))
-		args = append(args, "%"+in.Description+"%")
+	if in.NoPaidDebt {
+		filters = append(filters, fmt.Sprintf("amount_paid = $%d", argIdx))
+		args = append(args, 0)
 		argIdx++
 	}
 
@@ -156,7 +218,6 @@ func (d *installmentRepo) GetListDebts(in *pb.FilterDebts) (*pb.DebtsList, error
 	query += " ORDER BY created_at DESC"
 
 	if in.Limit > 0 && in.Page > 0 {
-
 		query += fmt.Sprintf(" LIMIT $%d", argIdx)
 		args = append(args, int64(in.Limit))
 		argIdx++
@@ -164,6 +225,7 @@ func (d *installmentRepo) GetListDebts(in *pb.FilterDebts) (*pb.DebtsList, error
 		query += fmt.Sprintf(" OFFSET $%d", argIdx)
 		offset := int64(in.Limit * (in.Page - 1))
 		args = append(args, offset)
+		argIdx++
 	}
 
 	rows, err := d.db.Queryx(query, args...)
@@ -175,17 +237,21 @@ func (d *installmentRepo) GetListDebts(in *pb.FilterDebts) (*pb.DebtsList, error
 	var totalCount int64
 	for rows.Next() {
 		var debt pb.Debts
-		var lastPaymentDate sql.NullTime
+		var lastPaymentDate, shouldPayAt sql.NullTime
+		var saleID sql.NullString
 
 		if err := rows.Scan(
 			&debt.Id,
 			&debt.ClientId,
+			&saleID,
 			&debt.TotalAmount,
 			&debt.AmountPaid,
 			&lastPaymentDate,
 			&debt.IsFullyPaid,
 			&debt.CreatedAt,
 			&debt.CurrencyCode,
+			&debt.DebtType,
+			&shouldPayAt,
 			&debt.CompanyId,
 			&totalCount,
 		); err != nil {
@@ -193,11 +259,24 @@ func (d *installmentRepo) GetListDebts(in *pb.FilterDebts) (*pb.DebtsList, error
 		}
 
 		if lastPaymentDate.Valid {
-			// Например, формат "YYYY-MM-DD" (можно изменить по необходимости)
 			debt.LastPaymentDate = lastPaymentDate.Time.Format("2006-01-02")
 		} else {
 			debt.LastPaymentDate = ""
 		}
+
+		if shouldPayAt.Valid {
+			debt.ShouldPayAt = shouldPayAt.Time.Format("2006-01-02")
+		} else {
+			debt.ShouldPayAt = ""
+		}
+
+		if saleID.Valid {
+			debt.SaleId = saleID.String
+		} else {
+			debt.ShouldPayAt = ""
+		}
+
+		debt.BalanceOfDebt = debt.TotalAmount - debt.AmountPaid
 
 		debts = append(debts, &debt)
 	}
@@ -212,16 +291,32 @@ func (d *installmentRepo) GetListDebts(in *pb.FilterDebts) (*pb.DebtsList, error
 	}, nil
 }
 
-// GetClientDebts retrieves all installments for a specific client
 func (d *installmentRepo) GetClientDebts(in *pb.ClientID) (*pb.DebtsList, error) {
+	if in.Id == "" {
+		return nil, fmt.Errorf("client id is required")
+	}
+
 	var debts []*pb.Debts
 
 	query := `
-        SELECT id, client_id, total_amount, amount_paid, last_payment_date, is_fully_paid, created_at, currency_code, company_id
+        SELECT 
+            id, 
+            client_id, 
+            sale_id,
+            total_amount, 
+            amount_paid, 
+            last_payment_date, 
+            is_fully_paid, 
+            created_at, 
+            currency_code,
+            debt_type,
+            should_pay_at,
+            company_id
         FROM installment
-        WHERE client_id = $1`
+        WHERE client_id = $1 AND company_id = $2 AND debt_type = $3
+    `
 
-	rows, err := d.db.Queryx(query, in.Id)
+	rows, err := d.db.Queryx(query, in.Id, in.CompanyId, in.DebtType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get client installments: %w", err)
 	}
@@ -229,39 +324,59 @@ func (d *installmentRepo) GetClientDebts(in *pb.ClientID) (*pb.DebtsList, error)
 
 	for rows.Next() {
 		var debt pb.Debts
-		var lastPaymentDate sql.NullString
+		var lastPaymentDate sql.NullTime
+		var shouldPayAt sql.NullTime
+		var saleID sql.NullString
+
 		if err := rows.Scan(
 			&debt.Id,
 			&debt.ClientId,
+			&saleID,
 			&debt.TotalAmount,
 			&debt.AmountPaid,
 			&lastPaymentDate,
 			&debt.IsFullyPaid,
 			&debt.CreatedAt,
 			&debt.CurrencyCode,
+			&debt.DebtType,
+			&shouldPayAt,
 			&debt.CompanyId,
 		); err != nil {
 			return nil, fmt.Errorf("failed to scan installment: %w", err)
 		}
+
 		if lastPaymentDate.Valid {
-			debt.LastPaymentDate = lastPaymentDate.String
+			debt.LastPaymentDate = lastPaymentDate.Time.Format("2006-01-02")
 		} else {
 			debt.LastPaymentDate = ""
 		}
+
+		if shouldPayAt.Valid {
+			debt.ShouldPayAt = shouldPayAt.Time.Format("2006-01-02")
+		} else {
+			debt.ShouldPayAt = ""
+		}
+
+		if saleID.Valid {
+			debt.SaleId = saleID.String
+		} else {
+			debt.SaleId = ""
+		}
+
+		debt.BalanceOfDebt = debt.TotalAmount - debt.AmountPaid
+
 		debts = append(debts, &debt)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows iteration error: %w", err)
 	}
 
 	return &pb.DebtsList{Installments: debts}, nil
 }
 
-// PayPayment records a payment for an installment
 func (d *installmentRepo) PayPayment(in *pb.PayDebtsReq) (*pb.Debts, error) {
-	// Проверяем, что DebtId не пустой
-	if in.DebtId == "" {
-		return nil, fmt.Errorf("invalid input: DebtId is required")
-	}
-
-	id := uuid.NewString()
+	paymentID := uuid.NewString()
 
 	tx, err := d.db.Beginx()
 	if err != nil {
@@ -269,44 +384,80 @@ func (d *installmentRepo) PayPayment(in *pb.PayDebtsReq) (*pb.Debts, error) {
 	}
 	defer tx.Rollback()
 
-	// Insert payment record
 	paymentQuery := `
-        INSERT INTO payments (id, installment_id, payment_amount, payment_date)
-        VALUES ($1, $2, $3, CURRENT_TIMESTAMP)`
-
-	_, err = tx.Exec(paymentQuery, id, in.DebtId, in.PaidAmount)
+        INSERT INTO payments (id, installment_id, payment_amount, pay_type, payment_date)
+        VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+    `
+	_, err = tx.Exec(paymentQuery, paymentID, in.DebtId, in.PaidAmount, in.PayType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert payment: %w", err)
 	}
 
-	// Update installment record (do not modify is_fully_paid column directly)
-	var debt pb.Debts
 	debtQuery := `
         UPDATE installment
         SET amount_paid = amount_paid + $1,
             last_payment_date = CURRENT_TIMESTAMP
-        WHERE id = $2
-        RETURNING id, client_id, total_amount, amount_paid, last_payment_date, is_fully_paid, created_at, currency_code, company_id`
+        WHERE id = $2 AND company_id = $3
+        RETURNING 
+            id, 
+            client_id, 
+            sale_id, 
+            total_amount, 
+            amount_paid, 
+            last_payment_date, 
+            is_fully_paid, 
+            created_at, 
+            currency_code,
+            debt_type,
+            should_pay_at,
+            company_id
+    `
+	var debt pb.Debts
+	var lastPaymentDate sql.NullTime
+	var shouldPayAt sql.NullTime
+	var saleID sql.NullString
 
-	err = tx.QueryRowx(debtQuery, in.PaidAmount, in.DebtId).Scan(
+	err = tx.QueryRowx(debtQuery, in.PaidAmount, in.DebtId, in.CompanyId).Scan(
 		&debt.Id,
 		&debt.ClientId,
+		&saleID,
 		&debt.TotalAmount,
 		&debt.AmountPaid,
-		&debt.LastPaymentDate,
+		&lastPaymentDate,
 		&debt.IsFullyPaid,
 		&debt.CreatedAt,
 		&debt.CurrencyCode,
+		&debt.DebtType,
+		&shouldPayAt,
 		&debt.CompanyId,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("debt not found: %w", err)
+			return nil, fmt.Errorf("debt not found or company_id mismatch: %w", err)
 		}
 		return nil, fmt.Errorf("failed to update installment: %w", err)
 	}
 
-	// Commit transaction
+	if lastPaymentDate.Valid {
+		debt.LastPaymentDate = lastPaymentDate.Time.Format("2006-01-02")
+	} else {
+		debt.LastPaymentDate = ""
+	}
+
+	if shouldPayAt.Valid {
+		debt.ShouldPayAt = shouldPayAt.Time.Format("2006-01-02")
+	} else {
+		debt.ShouldPayAt = ""
+	}
+
+	if saleID.Valid {
+		debt.SaleId = saleID.String
+	} else {
+		debt.SaleId = ""
+	}
+
+	debt.BalanceOfDebt = debt.TotalAmount - debt.AmountPaid
+
 	if err = tx.Commit(); err != nil {
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
@@ -315,28 +466,26 @@ func (d *installmentRepo) PayPayment(in *pb.PayDebtsReq) (*pb.Debts, error) {
 }
 
 func (d *installmentRepo) GetTotalDebtSum(in *pb.CompanyID) (*pb.SumMoney, error) {
-
 	query := `
 		SELECT currency_code, SUM(GREATEST(total_amount - amount_paid, 0)) AS debt
 		FROM installment
-		WHERE company_id = $1
-		GROUP BY currency_code
-	`
-	rows, err := d.db.QueryContext(context.Background(), query, in.Id)
+		WHERE company_id = $1 AND debt_type = $2 
+		GROUP BY currency_code`
+	args := []interface{}{in.Id, in.DebtType} // Добавлен второй параметр
+
+	rows, err := d.db.QueryContext(context.Background(), query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query for company debt: %w", err)
 	}
 	defer rows.Close()
 
-	// Формируем ответный объект SumMoney.
 	result := &pb.SumMoney{
 		CompanyId: in.Id,
 		Sum:       make([]*pb.Money, 0),
 	}
-
 	for rows.Next() {
 		var currency string
-		var debt float64 // DECIMAL(10,2) можно сканировать в float64
+		var debt float64
 		if err := rows.Scan(&currency, &debt); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
@@ -352,26 +501,22 @@ func (d *installmentRepo) GetTotalDebtSum(in *pb.CompanyID) (*pb.SumMoney, error
 }
 
 // GetUserTotalDebtSum рассчитывает сумму оставшихся долгов для конкретного клиента,
-// также группируя задолженности по валюте.
 func (d *installmentRepo) GetUserTotalDebtSum(in *pb.ClientID) (*pb.SumMoney, error) {
-	// SQL-запрос: аналогичный запрос, но фильтруем по client_id.
 	query := `
 		SELECT currency_code, SUM(GREATEST(total_amount - amount_paid, 0)) AS debt
 		FROM installment
-		WHERE client_id = $1
+		WHERE client_id = $1 AND debt_type = $2 AND company_id = $3
 		GROUP BY currency_code
 	`
-	rows, err := d.db.QueryContext(context.Background(), query, in.Id)
+	rows, err := d.db.QueryContext(context.Background(), query, in.Id, in.DebtType, in.CompanyId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query for client debt: %w", err)
 	}
 	defer rows.Close()
 
-	// Для ответа используем SumMoney; поле CompanyId можно оставить пустым.
 	result := &pb.SumMoney{
 		Sum: make([]*pb.Money, 0),
 	}
-
 	for rows.Next() {
 		var currency string
 		var debt float64

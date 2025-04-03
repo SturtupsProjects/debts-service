@@ -19,18 +19,20 @@ CREATE TABLE installment
     sale_id           UUID,
     total_amount      DECIMAL(10, 2) NOT NULL CHECK (total_amount >= 0),
     amount_paid       DECIMAL(10, 2) DEFAULT 0 CHECK (amount_paid >= 0),
+    currency_code     CHAR(3)        NOT NULL CHECK (currency_code IN ('usd', 'uzs')),
     last_payment_date DATE,
     is_fully_paid     BOOLEAN GENERATED ALWAYS AS (total_amount <= amount_paid) STORED,
-    currency_code     CHAR(3)        NOT NULL CHECK (currency_code IN ('usd', 'uzs')),
+    should_pay_at     DATE,
+    debt_type         VARCHAR(8)     NOT NULL CHECK (debt_type IN ('creditor', 'debtor')),
     created_at        TIMESTAMP      DEFAULT CURRENT_TIMESTAMP,
     company_id        UUID           NOT NULL
 );
 
--- Таблица payments
 CREATE TABLE payments
 (
     id             UUID PRIMARY KEY,
     installment_id UUID           NOT NULL REFERENCES installment (id) ON DELETE CASCADE,
+    pay_type   VARCHAR        NOT NULL CHECK ( pay_type IN ('in', 'out')),
     payment_date   TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     payment_amount DECIMAL(10, 2) NOT NULL CHECK (payment_amount > 0),
     created_at     TIMESTAMP   DEFAULT CURRENT_TIMESTAMP

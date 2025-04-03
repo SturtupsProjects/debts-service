@@ -28,13 +28,13 @@ const (
 	DebtsService_PayDebts_FullMethodName             = "/debts.DebtsService/PayDebts"
 	DebtsService_GetListDebts_FullMethodName         = "/debts.DebtsService/GetListDebts"
 	DebtsService_GetClientDebts_FullMethodName       = "/debts.DebtsService/GetClientDebts"
-	DebtsService_GetDebtsForExel_FullMethodName      = "/debts.DebtsService/GetDebtsForExel"
-	DebtsService_GetTotalDebtSum_FullMethodName      = "/debts.DebtsService/GetTotalDebtSum"
 	DebtsService_GetUserTotalDebtSum_FullMethodName  = "/debts.DebtsService/GetUserTotalDebtSum"
+	DebtsService_GetTotalDebtSum_FullMethodName      = "/debts.DebtsService/GetTotalDebtSum"
 	DebtsService_GetPayment_FullMethodName           = "/debts.DebtsService/GetPayment"
 	DebtsService_GetPaymentsByDebtsId_FullMethodName = "/debts.DebtsService/GetPaymentsByDebtsId"
 	DebtsService_GetPayments_FullMethodName          = "/debts.DebtsService/GetPayments"
 	DebtsService_GetUserPayments_FullMethodName      = "/debts.DebtsService/GetUserPayments"
+	DebtsService_GetDebtsForExel_FullMethodName      = "/debts.DebtsService/GetDebtsForExel"
 )
 
 // DebtsServiceClient is the client API for DebtsService service.
@@ -52,13 +52,13 @@ type DebtsServiceClient interface {
 	PayDebts(ctx context.Context, in *PayDebtsReq, opts ...grpc.CallOption) (*Debts, error)
 	GetListDebts(ctx context.Context, in *FilterDebts, opts ...grpc.CallOption) (*DebtsList, error)
 	GetClientDebts(ctx context.Context, in *ClientID, opts ...grpc.CallOption) (*DebtsList, error)
-	GetDebtsForExel(ctx context.Context, in *FilterExelDebt, opts ...grpc.CallOption) (*ExelDebtsList, error)
-	GetTotalDebtSum(ctx context.Context, in *CompanyID, opts ...grpc.CallOption) (*SumMoney, error)
 	GetUserTotalDebtSum(ctx context.Context, in *ClientID, opts ...grpc.CallOption) (*SumMoney, error)
+	GetTotalDebtSum(ctx context.Context, in *CompanyID, opts ...grpc.CallOption) (*SumMoney, error)
 	GetPayment(ctx context.Context, in *PaymentID, opts ...grpc.CallOption) (*Payment, error)
-	GetPaymentsByDebtsId(ctx context.Context, in *DebtsID, opts ...grpc.CallOption) (*PaymentList, error)
+	GetPaymentsByDebtsId(ctx context.Context, in *PayDebtsID, opts ...grpc.CallOption) (*PaymentList, error)
 	GetPayments(ctx context.Context, in *FilterPayment, opts ...grpc.CallOption) (*PaymentList, error)
 	GetUserPayments(ctx context.Context, in *ClientID, opts ...grpc.CallOption) (*UserPaymentsRes, error)
+	GetDebtsForExel(ctx context.Context, in *FilterExelDebt, opts ...grpc.CallOption) (*ExelDebtsList, error)
 }
 
 type debtsServiceClient struct {
@@ -159,10 +159,10 @@ func (c *debtsServiceClient) GetClientDebts(ctx context.Context, in *ClientID, o
 	return out, nil
 }
 
-func (c *debtsServiceClient) GetDebtsForExel(ctx context.Context, in *FilterExelDebt, opts ...grpc.CallOption) (*ExelDebtsList, error) {
+func (c *debtsServiceClient) GetUserTotalDebtSum(ctx context.Context, in *ClientID, opts ...grpc.CallOption) (*SumMoney, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ExelDebtsList)
-	err := c.cc.Invoke(ctx, DebtsService_GetDebtsForExel_FullMethodName, in, out, cOpts...)
+	out := new(SumMoney)
+	err := c.cc.Invoke(ctx, DebtsService_GetUserTotalDebtSum_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -179,16 +179,6 @@ func (c *debtsServiceClient) GetTotalDebtSum(ctx context.Context, in *CompanyID,
 	return out, nil
 }
 
-func (c *debtsServiceClient) GetUserTotalDebtSum(ctx context.Context, in *ClientID, opts ...grpc.CallOption) (*SumMoney, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SumMoney)
-	err := c.cc.Invoke(ctx, DebtsService_GetUserTotalDebtSum_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *debtsServiceClient) GetPayment(ctx context.Context, in *PaymentID, opts ...grpc.CallOption) (*Payment, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Payment)
@@ -199,7 +189,7 @@ func (c *debtsServiceClient) GetPayment(ctx context.Context, in *PaymentID, opts
 	return out, nil
 }
 
-func (c *debtsServiceClient) GetPaymentsByDebtsId(ctx context.Context, in *DebtsID, opts ...grpc.CallOption) (*PaymentList, error) {
+func (c *debtsServiceClient) GetPaymentsByDebtsId(ctx context.Context, in *PayDebtsID, opts ...grpc.CallOption) (*PaymentList, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PaymentList)
 	err := c.cc.Invoke(ctx, DebtsService_GetPaymentsByDebtsId_FullMethodName, in, out, cOpts...)
@@ -229,6 +219,16 @@ func (c *debtsServiceClient) GetUserPayments(ctx context.Context, in *ClientID, 
 	return out, nil
 }
 
+func (c *debtsServiceClient) GetDebtsForExel(ctx context.Context, in *FilterExelDebt, opts ...grpc.CallOption) (*ExelDebtsList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ExelDebtsList)
+	err := c.cc.Invoke(ctx, DebtsService_GetDebtsForExel_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DebtsServiceServer is the server API for DebtsService service.
 // All implementations must embed UnimplementedDebtsServiceServer
 // for forward compatibility
@@ -244,13 +244,13 @@ type DebtsServiceServer interface {
 	PayDebts(context.Context, *PayDebtsReq) (*Debts, error)
 	GetListDebts(context.Context, *FilterDebts) (*DebtsList, error)
 	GetClientDebts(context.Context, *ClientID) (*DebtsList, error)
-	GetDebtsForExel(context.Context, *FilterExelDebt) (*ExelDebtsList, error)
-	GetTotalDebtSum(context.Context, *CompanyID) (*SumMoney, error)
 	GetUserTotalDebtSum(context.Context, *ClientID) (*SumMoney, error)
+	GetTotalDebtSum(context.Context, *CompanyID) (*SumMoney, error)
 	GetPayment(context.Context, *PaymentID) (*Payment, error)
-	GetPaymentsByDebtsId(context.Context, *DebtsID) (*PaymentList, error)
+	GetPaymentsByDebtsId(context.Context, *PayDebtsID) (*PaymentList, error)
 	GetPayments(context.Context, *FilterPayment) (*PaymentList, error)
 	GetUserPayments(context.Context, *ClientID) (*UserPaymentsRes, error)
+	GetDebtsForExel(context.Context, *FilterExelDebt) (*ExelDebtsList, error)
 	mustEmbedUnimplementedDebtsServiceServer()
 }
 
@@ -285,19 +285,16 @@ func (UnimplementedDebtsServiceServer) GetListDebts(context.Context, *FilterDebt
 func (UnimplementedDebtsServiceServer) GetClientDebts(context.Context, *ClientID) (*DebtsList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetClientDebts not implemented")
 }
-func (UnimplementedDebtsServiceServer) GetDebtsForExel(context.Context, *FilterExelDebt) (*ExelDebtsList, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetDebtsForExel not implemented")
+func (UnimplementedDebtsServiceServer) GetUserTotalDebtSum(context.Context, *ClientID) (*SumMoney, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserTotalDebtSum not implemented")
 }
 func (UnimplementedDebtsServiceServer) GetTotalDebtSum(context.Context, *CompanyID) (*SumMoney, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTotalDebtSum not implemented")
 }
-func (UnimplementedDebtsServiceServer) GetUserTotalDebtSum(context.Context, *ClientID) (*SumMoney, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUserTotalDebtSum not implemented")
-}
 func (UnimplementedDebtsServiceServer) GetPayment(context.Context, *PaymentID) (*Payment, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPayment not implemented")
 }
-func (UnimplementedDebtsServiceServer) GetPaymentsByDebtsId(context.Context, *DebtsID) (*PaymentList, error) {
+func (UnimplementedDebtsServiceServer) GetPaymentsByDebtsId(context.Context, *PayDebtsID) (*PaymentList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPaymentsByDebtsId not implemented")
 }
 func (UnimplementedDebtsServiceServer) GetPayments(context.Context, *FilterPayment) (*PaymentList, error) {
@@ -305,6 +302,9 @@ func (UnimplementedDebtsServiceServer) GetPayments(context.Context, *FilterPayme
 }
 func (UnimplementedDebtsServiceServer) GetUserPayments(context.Context, *ClientID) (*UserPaymentsRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserPayments not implemented")
+}
+func (UnimplementedDebtsServiceServer) GetDebtsForExel(context.Context, *FilterExelDebt) (*ExelDebtsList, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDebtsForExel not implemented")
 }
 func (UnimplementedDebtsServiceServer) mustEmbedUnimplementedDebtsServiceServer() {}
 
@@ -481,20 +481,20 @@ func _DebtsService_GetClientDebts_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DebtsService_GetDebtsForExel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(FilterExelDebt)
+func _DebtsService_GetUserTotalDebtSum_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClientID)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DebtsServiceServer).GetDebtsForExel(ctx, in)
+		return srv.(DebtsServiceServer).GetUserTotalDebtSum(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DebtsService_GetDebtsForExel_FullMethodName,
+		FullMethod: DebtsService_GetUserTotalDebtSum_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DebtsServiceServer).GetDebtsForExel(ctx, req.(*FilterExelDebt))
+		return srv.(DebtsServiceServer).GetUserTotalDebtSum(ctx, req.(*ClientID))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -513,24 +513,6 @@ func _DebtsService_GetTotalDebtSum_Handler(srv interface{}, ctx context.Context,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(DebtsServiceServer).GetTotalDebtSum(ctx, req.(*CompanyID))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _DebtsService_GetUserTotalDebtSum_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ClientID)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DebtsServiceServer).GetUserTotalDebtSum(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: DebtsService_GetUserTotalDebtSum_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DebtsServiceServer).GetUserTotalDebtSum(ctx, req.(*ClientID))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -554,7 +536,7 @@ func _DebtsService_GetPayment_Handler(srv interface{}, ctx context.Context, dec 
 }
 
 func _DebtsService_GetPaymentsByDebtsId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DebtsID)
+	in := new(PayDebtsID)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -566,7 +548,7 @@ func _DebtsService_GetPaymentsByDebtsId_Handler(srv interface{}, ctx context.Con
 		FullMethod: DebtsService_GetPaymentsByDebtsId_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DebtsServiceServer).GetPaymentsByDebtsId(ctx, req.(*DebtsID))
+		return srv.(DebtsServiceServer).GetPaymentsByDebtsId(ctx, req.(*PayDebtsID))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -603,6 +585,24 @@ func _DebtsService_GetUserPayments_Handler(srv interface{}, ctx context.Context,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(DebtsServiceServer).GetUserPayments(ctx, req.(*ClientID))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DebtsService_GetDebtsForExel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FilterExelDebt)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DebtsServiceServer).GetDebtsForExel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DebtsService_GetDebtsForExel_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DebtsServiceServer).GetDebtsForExel(ctx, req.(*FilterExelDebt))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -651,16 +651,12 @@ var DebtsService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _DebtsService_GetClientDebts_Handler,
 		},
 		{
-			MethodName: "GetDebtsForExel",
-			Handler:    _DebtsService_GetDebtsForExel_Handler,
+			MethodName: "GetUserTotalDebtSum",
+			Handler:    _DebtsService_GetUserTotalDebtSum_Handler,
 		},
 		{
 			MethodName: "GetTotalDebtSum",
 			Handler:    _DebtsService_GetTotalDebtSum_Handler,
-		},
-		{
-			MethodName: "GetUserTotalDebtSum",
-			Handler:    _DebtsService_GetUserTotalDebtSum_Handler,
 		},
 		{
 			MethodName: "GetPayment",
@@ -677,6 +673,10 @@ var DebtsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUserPayments",
 			Handler:    _DebtsService_GetUserPayments_Handler,
+		},
+		{
+			MethodName: "GetDebtsForExel",
+			Handler:    _DebtsService_GetDebtsForExel_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
