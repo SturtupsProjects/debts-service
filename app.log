@@ -119,3 +119,7 @@
 {"time":"2025-04-03T23:09:43.973448743+05:00","level":"INFO","msg":"GetTotalDebtSum","req":{"id":"76158036-abe3-4635-8087-0eb2bbc864fd","debt_type":"debtor"}}
 {"time":"2025-04-03T23:10:14.737214715+05:00","level":"INFO","msg":"GetUserTotalDebtSum","req":{"company_id":"76158036-abe3-4635-8087-0eb2bbc864fd","id":"417efc25-0e12-4cd8-a308-854d27bfaa25","debt_type":"debtor"}}
 {"time":"2025-04-03T23:11:21.366956294+05:00","level":"INFO","msg":"GetDebt called","debt_id":"7b73b9a3-6d5d-43be-9285-ac1f1567f8e4"}
+{"time":"2025-04-03T23:27:19.125633045+05:00","level":"INFO","msg":"GetClientDebts called","client_id":"76158036-abe3-4635-8087-0eb2bbc864fd"}
+{"time":"2025-04-03T23:27:47.359841431+05:00","level":"INFO","msg":"CreateDebt called","client_id":"417efc25-0e12-4cd8-a308-854d27bfaa25"}
+{"time":"2025-04-03T23:27:47.361254063+05:00","level":"ERROR","msg":"Failed to create debt","error":"invalid date format for should_pay_at, expected dd-mm-yyyy: parsing time \"string\" as \"02-01-2006\": cannot parse \"string\" as \"02\""}
+{"time":"2025-04-03T23:27:55.914735829+05:00","level":"INFO","msg":"CreateDebt called","client_id":"417efc25-0e12-4cd8-a308-854d27bfaa25"}

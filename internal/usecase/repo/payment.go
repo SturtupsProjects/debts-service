@@ -35,7 +35,7 @@ func (p *paymentRepo) GetPayment(in *pb.PaymentID) (*pb.Payment, error) {
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("payment not found: %w", err)
+			return nil, nil
 		}
 		return nil, fmt.Errorf("failed to get payment: %w", err)
 	}
