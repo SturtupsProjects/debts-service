@@ -142,7 +142,7 @@ func (p *paymentRepo) GetUserPayments(in *pb.ClientID) (*pb.UserPaymentsRes, err
         WHERE i.client_id = $1 AND i.company_id = $2 AND i.debt_type = $3
     `
 
-	log.Println(in.Id, in.CompanyId, in.DebtType)
+	log.Println(in.Id, in.Id, in.CompanyId, in.DebtType)
 
 	rows, err := p.db.Queryx(query, in.Id, in.CompanyId, in.DebtType)
 	if err != nil {
